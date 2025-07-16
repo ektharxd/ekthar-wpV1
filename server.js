@@ -1,9 +1,11 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core'); // Changed from 'puppeteer'
 const path = require('path');
-const fs = require('fs-extra'); // For file system operations
+const fs = require('fs-extra');
+const { execSync } = require('child_process'); // For finding Chrome
+const os = require('os'); // For checking the operating system
 
 // --- Setup Servers ---
 const app = express();
@@ -18,6 +20,7 @@ let globalWs; // Store the single WebSocket connection
 // --- WebSocket Communication Handler ---
 wss.on('connection', (ws) => {
     console.log('Client connected.');
+    sendToClient('log', { level: 'info', message: 'UI connected. Ready to start.' });
     globalWs = ws; // Store the connection
 
     ws.on('message', async (message) => {
@@ -42,22 +45,59 @@ function sendToClient(type, payload) {
 
 // --- Browser & Main Logic ---
 async function startWhatsApp() {
-    console.log('Launching browser...');
+    console.log('Finding local Google Chrome installation...');
+    let executablePath;
+
+    try {
+        if (os.platform() === 'win32') {
+            const command = 'reg query "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe" /ve';
+            const stdout = execSync(command).toString();
+            // Parse the command output to find the path
+            const match = stdout.match(/REG_SZ\s+(.*)/);
+            if (match && match[1]) {
+                executablePath = match[1].trim();
+            } else {
+                throw new Error('Could not parse registry query output.');
+            }
+        } else {
+            // This is a placeholder for Mac/Linux if you ever expand.
+            // On Mac, it's usually '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+            // On Linux, it's often 'google-chrome'
+            throw new Error('Unsupported platform. Only Windows is automatically configured.');
+        }
+
+        if (!fs.existsSync(executablePath)) {
+            throw new Error('Detected Chrome path does not exist.');
+        }
+
+    } catch (e) {
+        console.error("Error: Could not find Google Chrome installed on this computer. Please install Google Chrome to use this program.");
+        console.error(`Detailed error: ${e.message}`);
+        if(globalWs) sendToClient('log', { level: 'error', message: 'Error: Google Chrome is not installed. Please install it to continue.' });
+        return; // Stop the function if Chrome is not found
+    }
+
+    console.log(`Launching browser from: ${executablePath}`);
+    if(globalWs) sendToClient('log', { level: 'info', message: 'Found Google Chrome. Launching browser...' });
+
     browser = await puppeteer.launch({
         headless: false,
         userDataDir: './whatsapp_session',
-        args: ['--start-maximized']
+        args: ['--start-maximized'],
+        // CRITICAL: Use the automatically found Chrome executable
+        executablePath: executablePath
     });
+    
     page = await browser.newPage();
     page.setDefaultNavigationTimeout(60000);
     console.log('Navigating to WhatsApp Web...');
+    if(globalWs) sendToClient('log', { level: 'info', message: 'Navigating to WhatsApp Web...' });
     await page.goto('https://web.whatsapp.com', { waitUntil: 'networkidle0' });
     console.log('WhatsApp Web loaded. Please scan the QR code if needed.');
+    if(globalWs) sendToClient('log', { level: 'info', message: 'WhatsApp Web loaded. Scan QR code if prompted.' });
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
-
-// --- In server.js ---
 
 async function handleBulkSend({ numbers, message }) {
     if (!page) {
@@ -65,11 +105,11 @@ async function handleBulkSend({ numbers, message }) {
         return;
     }
 
-    sendToClient('log', { level: 'info', message: `Request received for ${numbers.length} numbers.` });
+    sendToClient('log', { level: 'info', message: `Starting session for ${numbers.length} numbers.` });
     
     let successCount = 0;
     let errorCount = 0;
-    let errorNumbers = []; // Fixed: defined errorNumbers here
+    let errorNumbers = [];
     const sessionLog = [`Session Start: ${new Date().toLocaleString()}`, `Message: "${message}"`, '---'];
 
     for (const number of numbers) {
@@ -83,18 +123,10 @@ async function handleBulkSend({ numbers, message }) {
 
             const messageBoxSelector = 'div[contenteditable="true"][data-tab="10"]';
             await page.waitForSelector(messageBoxSelector, { timeout: 20000 });
-            
-            // Give the UI a moment to stabilize before sending
             await delay(1200);
 
-            // Send by pressing Enter
             await page.keyboard.press('Enter');
-
-            // --- THE CRITICAL FIX ---
-            // Add a static delay AFTER sending to ensure the message is processed by WhatsApp's servers
-            // before we navigate away. This prevents the "phantom send" issue.
-            await delay(1500); 
-            // ------------------------
+            await delay(1500); // CRITICAL: Wait for the send to process
 
             const successMsg = `Successfully sent to ${number}`;
             console.log(successMsg);
@@ -102,7 +134,7 @@ async function handleBulkSend({ numbers, message }) {
             successCount++;
             sendToClient('update', { status: 'success', number, successCount });
             
-            await delay(500); // Short delay before starting the next loop
+            await delay(500);
 
         } catch (error) {
             const errorMsg = `Failed for ${number}: ${error.message.split('\n')[0]}`;
@@ -110,7 +142,7 @@ async function handleBulkSend({ numbers, message }) {
             sessionLog.push(`[FAIL] ${errorMsg}`);
             errorCount++;
             errorNumbers.push(number);
-            sendToClient('update', { status: 'fail', number, errorCount });
+            sendToClient('update', { status: 'fail', number, errorCount, errorNumbers });
         }
     }
     
@@ -121,9 +153,9 @@ async function handleBulkSend({ numbers, message }) {
     });
 }
 
-
 const PORT = 3000;
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    // Start the process
     startWhatsApp();
 });

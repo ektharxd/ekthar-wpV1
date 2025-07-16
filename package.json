@@ -1,19 +1,36 @@
 {
-  "name": "whatsappproject",
+  "name": "whatsapp-project-v1",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "...",
+  "main": "server.js",
+  "//-- NEW: Add this 'bin' section. It tells pkg that server.js is the main file.": {},
+  "bin": {
+    "whatsapp-project-v1": "server.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0",
-    "fs-extra": "^11.3.0",
-    "puppeteer": "^24.13.0",
-    "ws": "^8.18.3",
+    "express": "^4.19.2",
+    "fs-extra": "^11.2.0",
+    "puppeteer-core": "^24.14.0",
+    "ws": "^8.18.0",
     "xlsx": "^0.18.5"
+  },
+  "//-- NEW: Add this 'pkg' section. It guides the build process.": {},
+  "pkg": {
+    "scripts": [
+      "public/**/*.js"
+    ],
+    "assets": [
+      "public/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
   }
 }
