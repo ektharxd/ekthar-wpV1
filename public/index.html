@@ -3,122 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Automation Tool</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>WhatsApp Messenger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;700&display=swap" rel="stylesheet">
     <script type="module" src="https://unpkg.com/@material/web/all.js?module"></script>
     <style>
-        :root {
-            --md-sys-color-primary: #006874;
-            --md-sys-color-surface-container-highest: #e0e3e3;
+        /* Existing styles... */
+        :root { /* Using Apple's Human Interface Guideline colors */
+            --blue-accent: #0A84FF; --green-accent: #30D158; --red-accent: #FF453A;
+            --fill-primary: rgba(120, 120, 128, 0.24); --fill-secondary: rgba(120, 120, 128, 0.16);
+            --text-primary: #F2F2F7; --text-secondary: #EBEBF599;
+            --bg-color: #1D1D1F; --radius: 20px; --font-family: 'Inter Tight', sans-serif;
         }
         body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            background-color: #f4f7f7;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
+            font-family: var(--font-family); margin: 0; display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; background-color: var(--bg-color); color: var(--text-primary);
         }
-        header {
-            width: 100%;
-            background-color: var(--md-sys-color-primary);
-            color: white;
-            padding: 16px 24px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            text-align: center;
+        .main-container {
+            width: 100%; max-width: 1100px; height: 90vh; max-height: 800px;
+            display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; padding: 24px;
         }
-        header h1 {
-            margin: 0;
-            font-size: 1.5em;
-            font-weight: 500;
+        .card {
+            background: rgba(44, 44, 46, 0.6); backdrop-filter: blur(24px) saturate(180%);
+            border-radius: var(--radius); border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 28px; display: flex; flex-direction: column; gap: 20px; overflow: hidden;
         }
-        main.container {
-            display: flex;
-            gap: 24px;
-            padding: 24px;
-            width: 100%;
-            max-width: 900px;
-            flex-grow: 1;
+        .controls-panel { gap: 16px; }
+        .status-panel { padding: 0; }
+        .panel-header { padding: 28px 28px 0 28px; }
+        h2 { font-size: 1.8em; font-weight: 700; margin: 0; }
+        /* Adjusted subtitle to include the credit */
+        .subtitle { margin-top:-12px; font-size: 0.9em; color: var(--text-secondary); }
+        .subtitle span { font-weight: 500; color: #EBEBF5B3; }
+        
+        /* New style for the file input */
+        #file-input-label { display: block; background: var(--fill-primary); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px dashed #8e8e93; transition: background 0.2s ease; }
+        #file-input-label:hover { background: var(--fill-secondary); }
+        #fileName { font-size: 0.8em; color: var(--text-secondary); margin-top: -16px; text-align:center; }
+
+        md-filled-button { --md-filled-button-container-color: var(--blue-accent); --md-filled-button-label-text-color: #fff; }
+        
+        .live-log {
+            background: var(--fill-primary); border-radius: 12px; padding: 12px; flex-grow: 1;
+            font-family: 'SF Mono', 'Courier New', monospace; font-size: 0.8em; overflow-y: auto;
         }
-        .controls {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 24px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            height: fit-content;
-        }
-        .log-area {
-            flex: 1.5;
-            background: #202124;
-            color: #e8eaed;
-            padding: 16px;
-            border-radius: 16px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9em;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        .log-area h3 {
-            margin-top: 0;
-            font-family: 'Roboto', sans-serif;
-            font-weight: 500;
-            border-bottom: 1px solid #5f6368;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
-        }
-        #log-container {
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-        .log-message { margin: 2px 0; }
-        .log-success { color: #81c995; }
-        .log-error { color: #f28b82; }
-        .log-info { color: #8ab4f8; }
-        .log-summary { font-weight: bold; margin-top: 10px; border-top: 1px solid #5f6368; padding-top: 10px; }
-        footer {
-            width: 100%;
-            text-align: center;
-            padding: 12px;
-            font-size: 0.8em;
-            color: #5f6368;
-        }
+        /* Custom scrollbar for a polished look */
+        .live-log::-webkit-scrollbar, .results-area::-webkit-scrollbar { width: 6px; }
+        .live-log::-webkit-scrollbar-track, .results-area::-webkit-scrollbar-track { background: transparent; }
+        .live-log::-webkit-scrollbar-thumb, .results-area::-webkit-scrollbar-thumb { background: #555; border-radius: 6px; }
+        .live-log::-webkit-scrollbar-thumb:hover, .results-area::-webkit-scrollbar-thumb:hover { background: #777; }
+
+        .log-entry { margin: 4px 0; transition: color 0.3s ease; }
+        .log-info { color: var(--text-secondary); }
+        .log-error { color: var(--red-accent); }
+
+        .progress-bar { width: 100%; height: 6px; background: var(--fill-secondary); border-radius: 6px; overflow: hidden; }
+        #progress-bar-fill { width: 0%; height: 100%; background: var(--blue-accent); transition: width 0.4s ease; border-radius: 6px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center; }
+        .stat-box h3 { font-size: 1em; font-weight: 500; color: var(--text-secondary); margin:0; }
+        .stat-box p { font-size: 2em; font-weight: 700; color: var(--text-primary); margin:4px 0 0 0;}
+        #success-count { color: var(--green-accent); }
+        #failed-count { color: var(--red-accent); }
+
+        .results-area { flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; overflow-y: auto; }
+        .results-list { list-style: none; padding: 0; margin: 0; }
+        .results-list li { background-color: var(--fill-secondary); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
-
-    <header>
-        <h1>WhatsApp Bulk Messenger</h1>
-    </header>
-
-    <main class="container">
-        <div class="controls">
-            <h2 style="font-weight: 400; margin: 0;">Controls</h2>
-             <p style="color: #c5221f; font-weight: 500; margin: 0;">Warning: Use at your own risk. This may lead to a ban.</p>
+    <div class="main-container">
+        <!-- LEFT PANEL (CONTROLS & LIVE LOG) -->
+        <div class="controls-panel card">
+            <h2>Controls</h2>
+            <!-- Moved developer credit here for better placement -->
+            <p class="subtitle">by <span>ca4solutions</span></p>
             <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
-            <md-filled-button onclick="document.getElementById('excelFile').click()">
-                Select Excel File
-            </md-filled-button>
-            <md-outlined-text-field id="message" label="Your Message" type="textarea" rows="6"></md-outlined-text-field>
-            <md-filled-tonal-button id="sendMessageBtn">Send Messages</md-filled-tonal-button>
+            <label for="excelFile" id="file-input-label">Select Excel File</label>
+            <span id="fileName">No file selected.</span>
+            <md-outlined-text-field id="message" label="Your Message" type="textarea" rows="5"></md-outlined-text-field>
+            <h3>Live Activity</h3>
+            <div id="live-log-container" class="live-log"></div>
+            <md-filled-button id="sendMessageBtn">Send Messages</md-filled-button>
         </div>
-        <div class="log-area">
-            <h3>Live Status Log</h3>
-            <div id="log-container">
-                <div class="log-message log-info">Awaiting instructions...</div>
+
+        <!-- RIGHT PANEL (STATS & RESULTS) -->
+        <div class="status-panel card">
+            <div class="panel-header">
+                <h2>Session Stats</h2>
+                <div class="progress-bar" style="margin-top:20px;"><div id="progress-bar-fill"></div></div>
+                <div class="stats-grid" style="margin-top:20px;">
+                    <div class="stat-box"><h3 >SUCCESS</h3><p id="success-count">0</p></div>
+                    <div class="stat-box"><h3 >FAILED</h3><p id="failed-count">0</p></div>
+                    <div class="stat-box"><h3 >TOTAL</h3><p id="total-count">0</p></div>
+                </div>
+            </div>
+            <div class="results-area">
+                <div>
+                    <h4>Sent Successfully</h4>
+                    <ul id="success-list" class="results-list"></ul>
+                </div>
+                <div>
+                    <h4>Failed to Send</h4>
+                    <ul id="failed-list" class="results-list"></ul>
+                </div>
             </div>
         </div>
-    </main>
-
-    <footer>
-        Created by Ekthar
-    </footer>
-
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="app.js"></script>
 </body>
