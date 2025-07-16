@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Automation Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/@material/web/all.js?module"></script>
+    <style>
+        :root {
+            --md-sys-color-primary: #006874;
+            --md-sys-color-surface-container-highest: #e0e3e3;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f4f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        header {
+            width: 100%;
+            background-color: var(--md-sys-color-primary);
+            color: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 500;
+        }
+        main.container {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            width: 100%;
+            max-width: 900px;
+            flex-grow: 1;
+        }
+        .controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 24px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .log-area {
+            flex: 1.5;
+            background: #202124;
+            color: #e8eaed;
+            padding: 16px;
+            border-radius: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .log-area h3 {
+            margin-top: 0;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            border-bottom: 1px solid #5f6368;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        #log-container {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .log-message { margin: 2px 0; }
+        .log-success { color: #81c995; }
+        .log-error { color: #f28b82; }
+        .log-info { color: #8ab4f8; }
+        .log-summary { font-weight: bold; margin-top: 10px; border-top: 1px solid #5f6368; padding-top: 10px; }
+        footer {
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            font-size: 0.8em;
+            color: #5f6368;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>WhatsApp Bulk Messenger</h1>
+    </header>
+
+    <main class="container">
+        <div class="controls">
+            <h2 style="font-weight: 400; margin: 0;">Controls</h2>
+             <p style="color: #c5221f; font-weight: 500; margin: 0;">Warning: Use at your own risk. This may lead to a ban.</p>
+            <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
+            <md-filled-button onclick="document.getElementById('excelFile').click()">
+                Select Excel File
+            </md-filled-button>
+            <md-outlined-text-field id="message" label="Your Message" type="textarea" rows="6"></md-outlined-text-field>
+            <md-filled-tonal-button id="sendMessageBtn">Send Messages</md-filled-tonal-button>
+        </div>
+        <div class="log-area">
+            <h3>Live Status Log</h3>
+            <div id="log-container">
+                <div class="log-message log-info">Awaiting instructions...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Created by Ekthar
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
