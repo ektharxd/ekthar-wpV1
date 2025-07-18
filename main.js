@@ -16,28 +16,16 @@ function createWindow() {
         icon: path.join(__dirname, 'public', 'bee.ico'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            devTools: false // Disabled for final product
+            contextIsolation: true
         }
     });
-
     mainWindow.setMenu(null);
-    
-    // --- THE UNBREAKABLE SPLASH SCREEN LOGIC ---
-    // 1. Load the beautiful splash screen first.
-    mainWindow.loadFile(path.join(__dirname, 'public', 'splash.html'));
-
-    // 2. After a 4-second delay, load the real application.
-    setTimeout(() => {
-        mainWindow.loadFile(path.join(__dirname, 'public', 'index.html'));
-    }, 4000); // 4-second delay for the animation
+    mainWindow.loadFile(path.join(__dirname, 'public', 'index.html'));
 }
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 
-
-// ---IPC Handlers (No changes from your last working backend logic) ---
 ipcMain.handle('connect-whatsapp', async () => {
     return await startAutomationEngine();
 });
@@ -45,9 +33,6 @@ ipcMain.handle('start-session', async (event, data) => {
     return await handleBulkSend(data);
 });
 
-
-// --- All other backend functions (sendToUI, startAutomationEngine, handleBulkSend, delay) ---
-// The versions from your last successful build are perfect. They are copy/pasted below for completeness.
 function sendToUI(type, payload) {
     if (mainWindow) {
         mainWindow.webContents.send('update', { type, ...payload });
@@ -73,7 +58,23 @@ async function startAutomationEngine() {
     }
 
     try {
-        browser = await puppeteer.launch({ headless: false, userDataDir: './whatsapp_session', args: ['--start-maximized'], defaultViewport: null, executablePath: executablePath });
+        // --- THIS IS THE DEFINITIVE FIX ---
+        // Get Electron's official userData path, which is always writeable,
+        // e.g., C:\Users\Ekthar\AppData\Roaming\Beesoft
+        const userDataPath = app.getPath('userData');
+        // Create a dedicated subfolder for our session data within that path.
+        const sessionPath = path.join(userDataPath, 'whatsapp_session');
+        console.log(`Using session data path: ${sessionPath}`);
+        // ---------------------------------
+
+        browser = await puppeteer.launch({ 
+            headless: false, 
+            userDataDir: sessionPath, // Use the new, correct, and always-writeable path
+            args: ['--start-maximized'], 
+            defaultViewport: null, 
+            executablePath: executablePath 
+        });
+
         page = (await browser.pages())[0];
         await page.goto('https://web.whatsapp.com', { waitUntil: 'networkidle0' });
         const msg = 'Engine connected to WhatsApp Web. Ready for your session.';
