@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1c1d25;
+            overflow: hidden;
+            font-family: 'Inter Tight', sans-serif;
+        }
+        .container {
+            text-align: center;
+        }
+        .logo {
+            width: 128px;
+            height: 128px;
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+                       pulse 2.5s infinite 1.2s;
+            opacity: 0;
+        }
+        .title {
+            font-size: 2em;
+            color: #EAEAEF;
+            margin-top: 16px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+        }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="bee.ico" alt="Beesoft Logo" class="logo">
+        <div class="title">Beesoft 🐝</div>
+    </div>
+</body>
+</html>

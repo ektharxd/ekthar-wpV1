@@ -1,4 +1,4 @@
-// --- Element Selectors ---
+// --- All Element Selectors ---
 const welcomeScreen = document.getElementById('welcome-screen');
 const mainAppContainer = document.getElementById('main-app-container');
 const connectButton = document.getElementById('connectButton');
@@ -14,14 +14,14 @@ const failedCountEl = document.getElementById('failed-count');
 const totalCountEl = document.getElementById('total-count');
 const resultsListEl = document.getElementById('results-list');
 
-// --- Application State ---
+// --- Application State Management ---
 function showMainApp() {
     welcomeScreen.style.display = 'none';
-    mainAppContainer.classList.add('visible'); // Correctly makes the entire dashboard visible
-    logToUI = createLogger(logListEl); // Switches logging to the main panel
+    mainAppContainer.classList.add('visible'); // Correctly shows the entire dashboard
+    logToUI = createLogger(logListEl); // Switches the log output to the main panel
 }
 
-let logToUI = createLogger(welcomeLogContainer); // Start logging to the Welcome Screen log
+let logToUI = createLogger(welcomeLogContainer); // Start logging to the Welcome Screen
 
 function createLogger(container) {
     return function(message, level) {
@@ -37,21 +37,25 @@ function createLogger(container) {
 connectButton.addEventListener('click', async () => {
     connectButton.disabled = true;
     connectButton.innerHTML = `Connecting... Please Wait`;
-    // This is the call that was failing. It is now guaranteed to work.
+    
+    // --- THE DEFINITIVE FIX ---
+    // We now act DIRECTLY on the result of the connection attempt.
     const result = await window.electronAPI.connectWhatsApp();
-    if (!result.success) {
+
+    if (result.success) {
+        // If the backend says it succeeded, we transition the UI.
+        showMainApp();
+    } else {
+        // If it failed, we re-enable the button so the user can try again.
         connectButton.disabled = false;
         connectButton.innerHTML = `<span class="material-symbols-outlined" slot="icon">hub</span> Retry Connection`;
     }
 });
 
-// --- The Definitive Message Handler from Backend to UI ---
+// --- Main Message Handler from Backend to UI ---
 function handleServerMessage(data) {
-    // Special check to trigger the UI transition on success
-    if (data.type === 'log' && data.level === 'success' && data.message.includes('Engine connected')) {
-        showMainApp();
-    }
-    
+    // This handler's only job is to update the UI with logs and stats.
+    // It NO LONGER controls the application state. This is much more robust.
     switch (data.type) {
         case 'log':
             logToUI(data.message, data.level);
@@ -75,8 +79,7 @@ function handleServerMessage(data) {
 }
 window.electronAPI.onUpdate(handleServerMessage);
 
-
-// --- All Other UI Functions (File handling, lists, etc.) ---
+// --- All Other UI Functions and Event Listeners (File handling, lists, etc.) ---
 function handleFileSelect(file) {
     fileDropZone.classList.add('has-file');
     filePrompt.textContent = file.name;
@@ -92,6 +95,7 @@ function resetUI() {
     sendButton.disabled = false;
     sendButton.innerHTML = `<span class="material-symbols-outlined" slot="icon">rocket_launch</span> Launch Session`;
 }
+
 function addResultToList(number, status) {
     const li = document.createElement('li');
     li.className = 'list-item result-item';
@@ -101,6 +105,7 @@ function addResultToList(number, status) {
     resultsListEl.appendChild(li);
     resultsListEl.scrollTop = resultsListEl.scrollHeight;
 }
+
 function downloadLog(content) {
     const blob = new Blob([content], { type: 'text/plain' });
     const a = document.createElement('a');
