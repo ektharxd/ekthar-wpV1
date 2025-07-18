@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>WP Automation Suite v4 by ca4solutions</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script type="module" src="https://unpkg.com/@material/web/all.js?module"></script>
+
+    <style>
+        /* --- V4 Definitive Design System --- */
+        :root {
+            --m3-primary: #6ea5ff; --m3-on-primary: #ffffff;
+            --m3-surface-0: rgba(20, 21, 28, 0.5); --m3-surface-1: rgba(36, 38, 51, 0.7); --m3-surface-2: rgba(44, 46, 61, 0.8);
+            --m3-outline: rgba(180, 180, 190, 0.2);
+            --m3-on-surface: #EAEAEF; --m3-on-surface-variant: #C9C9D1;
+            --m3-success: #3DDC84; --m3-error: #FF5A5A;
+            --m3-radius-xl: 28px; --m3-radius-l: 20px; --m3-radius-m: 16px;
+            --font-family: 'Inter Tight', sans-serif;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+        
+        body {
+            font-family: var(--font-family); margin: 0; display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; background-image: linear-gradient(135deg, #2a2d47 0%, #1c1d25 100%);
+            color: var(--m3-on-surface); overflow: hidden;
+        }
+
+        .app-shell {
+            width: 95vw; height: 90vh; max-width: 1400px; max-height: 900px;
+            display: flex; justify-content: center; align-items: center;
+            background: var(--m3-surface-0); backdrop-filter: blur(50px) saturate(180%); -webkit-backdrop-filter: blur(50px) saturate(180%);
+            border-radius: var(--m3-radius-xl); border: 1px solid var(--m3-outline);
+            animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            padding: 20px;
+        }
+
+        /* --- Welcome Screen --- */
+        #welcome-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; width: 100%; animation: fadeIn 0.5s ease-out; }
+        #welcome-screen h2 { font-size: 2.8em; margin-bottom: 8px; }
+        #welcome-screen p { font-size: 1.1em; color: var(--m3-on-surface-variant); max-width: 500px; margin-top: 0;}
+        #connectButton { --md-filled-button-container-height: 56px; --md-filled-button-label-text-font-size: 1.1em; --md-filled-button-container-color: var(--m3-primary); width: 280px; margin-top: 20px; }
+        .getting-started-guide { width: 100%; max-width: 650px; margin-top: 40px; display: flex; justify-content: space-around; gap: 20px; }
+        .guide-step { opacity: 0; padding: 20px; background-color: var(--m3-surface-2); border-radius: var(--m3-radius-m); border: 1px solid var(--m3-outline); width: 200px; }
+        .guide-step .material-symbols-outlined { font-size: 32px; color: var(--m3-primary); }
+        .guide-step h4 { margin: 8px 0; font-size: 1em; color: var(--m3-on-surface); }
+        .guide-step p { font-size: 0.85em; color: var(--m3-on-surface-variant); margin: 0; }
+        
+        /* --- Main App Container (Hidden by default) --- */
+        #main-app-container { display: none; width: 100%; height: 100%; gap: 20px; }
+        #main-app-container.visible { display: flex; animation: fadeIn 0.6s ease-out; }
+
+        /* --- V4 Panel Styles --- */
+        .command-center { width: 420px; flex-shrink: 0; background-color: var(--m3-surface-1); border-radius: var(--m3-radius-l); padding: 28px; display: flex; flex-direction: column; gap: 28px; }
+        .header h2 { font-size: 2.2em; font-weight: 700; margin: 0; line-height: 1.1; }
+        .header p { font-size: 1.1em; color: var(--m3-on-surface-variant); margin: 4px 0 0 0;}
+        .input-group { display: flex; flex-direction: column; gap: 10px; }
+        .input-group label { font-weight: 500; color: var(--m3-on-surface-variant); margin-left: 4px; }
+        #file-drop-zone { border: 2px dashed var(--m3-outline); border-radius: var(--m3-radius-m); padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s ease-in-out; }
+        #file-drop-zone:hover { transform: scale(1.02); background: rgba(255,255,255,0.03);}
+        #file-drop-zone.has-file { border-color: var(--m3-primary); background-color: rgba(110, 165, 255, 0.1); color: var(--m3-primary); }
+        md-outlined-text-field { flex-grow: 1; --md-sys-color-primary: var(--m3-primary); --md-outlined-text-field-input-text-color: var(--m3-on-surface); --md-sys-color-on-surface: var(--m3-on-surface-variant); --md-sys-color-outline: var(--m3-outline); }
+        #sendButton { --md-filled-button-container-color: var(--m3-primary); margin-top: auto; padding: 20px 0; --md-filled-button-label-text-font-size: 1.1em; font-weight: 600; transition: all 0.2s ease-in-out; }
+        #sendButton:not(:disabled):hover { box-shadow: 0 4px 20px rgba(110, 165, 255, 0.3); transform: translateY(-3px); }
+        .mission-control { flex-grow: 1; background-color: var(--m3-surface-1); border-radius: var(--m3-radius-l); padding: 28px; display: flex; flex-direction: column; gap: 20px; min-height: 0; }
+        .stats-dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .stat-box { background-color: var(--m3-surface-2); padding: 20px; border-radius: var(--m3-radius-m); text-align: center;}
+        .stat-box h3 { font-size: 0.9em; letter-spacing: 0.8px; font-weight: 500; color: var(--m3-on-surface-variant); margin:0; }
+        .stat-box p { font-size: 2.5em; font-weight: 700; color: var(--m3-on-surface); margin:4px 0 0 0;}
+        #success-count { color: var(--m3-success); } #failed-count { color: var(--m3-error); }
+        .feedback-grid { flex-grow: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; min-height: 0; }
+        .feedback-column { display: flex; flex-direction: column; gap: 12px; min-height: 0;}
+        .feedback-column h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 500; border-bottom: 1px solid var(--m3-outline); padding-bottom: 12px;}
+        .scrollable-list { background-color: var(--m3-surface-2); border-radius: var(--m3-radius-m); padding: 10px; overflow-y: auto; flex-grow: 1;}
+        .scrollable-list::-webkit-scrollbar { width: 6px; }
+        .scrollable-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 6px; }
+        .list-item { list-style: none; padding: 8px 10px; border-radius: 8px; margin: 0 4px 8px 4px; font-size: 0.9em; opacity: 0; animation: popIn 0.4s ease-out forwards;}
+        .log-entry { font-family: 'SF Mono', 'Courier New', monospace; font-size: 0.85em; color: var(--m3-on-surface-variant); }
+        .result-item { display: flex; align-items: center; gap: 10px; background-color: var(--m3-surface-0); }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <!-- WELCOME SCREEN (Visible by default) -->
+        <div id="welcome-screen">
+            <div style="animation: fadeInUp 0.5s 0.1s ease-out forwards; opacity: 0;">
+                <h2>Welcome to Beesoft 🐝</h2>
+                <p>Click below to connect the automation engine to WhatsApp.</p>
+            </div>
+            <div style="animation: fadeInUp 0.5s 0.3s ease-out forwards; opacity: 0;">
+                <md-filled-button id="connectButton">
+                    <span class="material-symbols-outlined" slot="icon">hub</span>
+                    Connect & Continue
+                </md-filled-button>
+            </div>
+            <div class="getting-started-guide">
+                <div class="guide-step" style="animation: fadeInUp 0.5s 0.5s ease-out forwards;">
+                    <span class="material-symbols-outlined">hub</span>
+                    <h4>1. Connect</h4>
+                    <p>Launch the engine & log in to WhatsApp Web.</p>
+                </div>
+                <div class="guide-step" style="animation: fadeInUp 0.5s 0.7s ease-out forwards;">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    <h4>2. Prepare</h4>
+                    <p>Upload your contacts from an Excel file.</p>
+                </div>
+                <div class="guide-step" style="animation: fadeInUp 0.5s 0.9s ease-out forwards;">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    <h4>3. Launch</h4>
+                    <p>Write your message and launch the session.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN APP (Initially Hidden) -->
+        <div id="main-app-container">
+            <!-- Left: Command Center -->
+            <div class="command-center">
+                <div class="header">
+                    <h2>WP Automation Suite</h2>
+                    <p>by ca4solutions</p>
+                </div>
+                <div class="input-group">
+                    <label>Source File</label>
+                    <input type="file" id="excelFile" hidden>
+                    <div id="file-drop-zone">
+                        <span class="material-symbols-outlined">upload_file</span>
+                        <p id="file-prompt">Select Excel File</p>
+                    </div>
+                </div>
+                <div class="input-group" style="flex-grow: 1; display: flex;">
+                    <label for="message">Message Template</label>
+                    <md-outlined-text-field id="message" type="textarea"></md-outlined-text-field>
+                </div>
+                <md-filled-button id="sendButton">
+                    <span class="material-symbols-outlined" slot="icon">rocket_launch</span>
+                    Launch Session
+                </md-filled-button>
+            </div>
+
+            <!-- Right: Mission Control -->
+            <div class="mission-control">
+                <div class="stats-dashboard">
+                    <div class="stat-box"><h3>SUCCESS</h3><p id="success-count">0</p></div>
+                    <div class="stat-box"><h3>FAILED</h3><p id="failed-count">0</p></div>
+                    <div class="stat-box"><h3>TOTAL</h3><p id="total-count">0</p></div>
+                </div>
+                <div class="feedback-grid">
+                    <div class="feedback-column">
+                        <h3><span class="material-symbols-outlined">list_alt</span> Live Activity</h3>
+                        <ul id="live-log-list" class="scrollable-list"></ul>
+                    </div>
+                    <div class="feedback-column">
+                        <h3><span class="material-symbols-outlined">summarize</span> Session Results</h3>
+                        <ul id="results-list" class="scrollable-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Script Files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
