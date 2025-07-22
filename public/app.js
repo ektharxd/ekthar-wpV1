@@ -147,7 +147,7 @@ function handleSessionFinished(data) {
         Run Another Session
     `;
     qrContainer.style.display = 'none'; // Hide QR after session is ready
-    resetUI();
+    // resetUI(); // Only reset when user clicks Reset Session
 }
 
 // File Handling

@@ -1,384 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Beesoft 🐝 - WhatsApp Automation</title>
-
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <script type="module" src="https://unpkg.com/@material/web/all.js?module"></script>
-
-    <style>
-        :root {
-            --m3-primary: #6ea5ff;
-            --m3-primary-hover: #5a94ff;
-            --m3-on-primary: #ffffff;
-            --m3-surface-0: rgba(20, 21, 28, 0.5);
-            --m3-surface-1: rgba(36, 38, 51, 0.7);
-            --m3-surface-2: rgba(44, 46, 61, 0.8);
-            --m3-outline: rgba(180, 180, 190, 0.2);
-            --m3-on-surface: #EAEAEF;
-            --m3-on-surface-variant: #C9C9D1;
-            --m3-success: #3DDC84;
-            --m3-error: #FF5A5A;
-            --m3-radius-xl: 24px;
-            --m3-radius-l: 16px;
-            --m3-radius-m: 12px;
-            --font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body {
-            font-family: var(--font-family);
-            background: linear-gradient(135deg, #2a2d47 0%, #1c1d25 100%);
-            color: var(--m3-on-surface);
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
-            margin: 0;
-            padding: 16px;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .app-shell {
-            width: 100%;
-            max-width: 1400px;
-            height: 90vh;
-            background: var(--m3-surface-0);
-            backdrop-filter: blur(20px);
-            border-radius: var(--m3-radius-xl);
-            border: 1px solid var(--m3-outline);
-            display: flex;
-            padding: 16px;
-            gap: 16px;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        /* Welcome Screen */
-        #welcome-screen {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 24px;
-        }
-
-        #welcome-screen h2 {
-            font-size: 2.5em;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(120deg, var(--m3-primary), #fff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: slideUp 0.5s ease-out;
-        }
-
-        #welcome-screen p {
-            color: var(--m3-on-surface-variant);
-            margin-bottom: 24px;
-            animation: slideUp 0.5s ease-out 0.1s backwards;
-        }
-
-        #connectButton {
-            --md-filled-button-container-height: 48px;
-            --md-filled-button-container-color: var(--m3-primary);
-            min-width: 200px;
-            animation: slideUp 0.5s ease-out 0.2s backwards;
-        }
-
-        /* Main App */
-        #main-app-container {
-            display: none;
-            width: 100%;
-            height: 100%;
-            gap: 16px;
-        }
-
-        #main-app-container.visible {
-            display: flex;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .command-center {
-            width: 360px;
-            flex-shrink: 0;
-            background: var(--m3-surface-1);
-            border-radius: var(--m3-radius-l);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .header h2 {
-            font-size: 1.8em;
-            font-weight: 700;
-            margin: 0;
-            background: linear-gradient(120deg, var(--m3-primary), #fff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header p {
-            font-size: 0.9em;
-            color: var(--m3-on-surface-variant);
-            margin-top: 4px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .input-group label {
-            font-size: 0.9em;
-            font-weight: 500;
-            color: var(--m3-on-surface-variant);
-        }
-
-        #file-drop-zone {
-            border: 2px dashed var(--m3-outline);
-            border-radius: var(--m3-radius-m);
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        #file-drop-zone:hover {
-            border-color: var(--m3-primary);
-            background: rgba(110, 165, 255, 0.05);
-        }
-
-        #file-drop-zone.has-file {
-            border-color: var(--m3-primary);
-            background: rgba(110, 165, 255, 0.1);
-        }
-
-        #attachImageBtn {
-            --md-outlined-button-label-text-color: var(--m3-on-surface-variant);
-        }
-
-        #imageFileName {
-            font-size: 0.8em;
-            color: var(--m3-on-surface-variant);
-            text-align: center;
-        }
-
-        md-outlined-text-field {
-            --md-sys-color-primary: var(--m3-primary);
-            --md-outlined-text-field-input-text-color: var(--m3-on-surface);
-            --md-sys-color-outline: var(--m3-outline);
-        }
-
-        #sendButton {
-            --md-filled-button-container-color: var(--m3-primary);
-            margin-top: auto;
-        }
-
-        /* Mission Control */
-        .mission-control {
-            flex: 1;
-            background: var(--m3-surface-1);
-            border-radius: var(--m3-radius-l);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            min-width: 0;
-        }
-
-        .stats-dashboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .stat-box {
-            background: var(--m3-surface-2);
-            padding: 16px;
-            border-radius: var(--m3-radius-m);
-            text-align: center;
-        }
-
-        .stat-box h3 {
-            font-size: 0.8em;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--m3-on-surface-variant);
-            margin-bottom: 4px;
-        }
-
-        .stat-box p {
-            font-size: 2em;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        #success-count { color: var(--m3-success); }
-        #failed-count { color: var(--m3-error); }
-
-        .feedback-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 16px;
-            min-height: 0;
-        }
-
-        .feedback-column {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            min-height: 0;
-        }
-
-        .feedback-column h3 {
-            font-size: 0.9em;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--m3-outline);
-            margin: 0;
-        }
-
-        .scrollable-list {
-            flex: 1;
-            background: var(--m3-surface-2);
-            border-radius: var(--m3-radius-m);
-            padding: 12px;
-            overflow-y: auto;
-            font-size: 0.9em;
-        }
-
-        .list-item {
-            list-style: none;
-            padding: 8px 12px;
-            margin-bottom: 8px;
-            border-radius: var(--m3-radius-m);
-            background: var(--m3-surface-0);
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        @media (max-width: 1000px) {
-            .app-shell {
-                height: auto;
-                min-height: 90vh;
-            }
-
-            #main-app-container {
-                flex-direction: column;
-            }
-
-            .command-center {
-                width: 100%;
-            }
-
-            .feedback-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beesoft 🐝 - WhatsApp Automation</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="app-shell">
-        <!-- Welcome Screen -->
-        <div id="welcome-screen">
-            <h2>Welcome to Beesoft 🐝</h2>
-            <p>Connect to WhatsApp Web to begin your automation session</p>
-            <md-filled-button id="connectButton">
-                <span class="material-symbols-outlined" slot="icon">hub</span>
-                Connect to WhatsApp
-            </md-filled-button>
+  <div id="theme-toggle" class="theme-toggle" title="Toggle theme">
+    <span class="material-symbols-outlined">dark_mode</span>
+  </div>
+  <div id="app-root" class="fullscreen-app">
+    <!-- Welcome/Login Screen -->
+    <section id="welcome-screen" class="super-welcome visible">
+      <div class="welcome-glass animate-in">
+        <img src="Bee.ico" alt="Beesoft Logo" class="welcome-logo" />
+        <h2 class="welcome-title">Welcome to Beesoft 🐝</h2>
+        <p class="welcome-desc">Premium WhatsApp automation for professionals.<br>Connect to get started.</p>
+        <div class="network-info" id="network-info">
+          <span class="network-loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span> Loading network details...</span>
         </div>
-
-        <!-- Main App -->
-        <div id="main-app-container">
-            <!-- Command Center -->
-            <div class="command-center">
-                <div class="header">
-                    <h2>Beesoft 🐝</h2>
-                    <p>WhatsApp Automation Suite</p>
-                </div>
-                <div class="input-group">
-                    <label>Contact List</label>
-                    <input type="file" id="excelFile" hidden accept=".xlsx,.xls,.csv">
-                    <div id="file-drop-zone">
-                        <span class="material-symbols-outlined">upload_file</span>
-                        <p id="file-prompt">Drop Excel file or click to browse</p>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Image (Optional)</label>
-                    <input type="file" id="imageFile" hidden accept="image/*">
-                    <md-outlined-button id="attachImageBtn">
-                        <span class="material-symbols-outlined" slot="icon">image</span>
-                        Select Image
-                    </md-outlined-button>
-                    <p id="imageFileName">No image selected</p>
-                </div>
-                <div class="input-group">
-                    <label>Message</label>
-                    <md-outlined-text-field id="message" type="textarea" rows="4"></md-outlined-text-field>
-                </div>
-                <md-filled-button id="sendButton">
-                    <span class="material-symbols-outlined" slot="icon">send</span>
-                    Start Sending
-                </md-filled-button>
+        <button id="connectButton" class="macos-btn primary super-connect">Connect & Continue</button>
+        <div class="onboarding-steps premium-steps">
+          <div class="onboarding-step">
+            <span class="material-symbols-outlined step-icon premium-icon">hub</span>
+            <div>
+              <h4>1. Connect</h4>
+              <p>Log in to WhatsApp Web securely.</p>
             </div>
-
-            <!-- Mission Control -->
-            <div class="mission-control">
-                <div class="stats-dashboard">
-                    <div class="stat-box">
-                        <h3>Success</h3>
-                        <p id="success-count">0</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3>Failed</h3>
-                        <p id="failed-count">0</p>
-                    </div>
-                    <div class="stat-box">
-                        <h3>Total</h3>
-                        <p id="total-count">0</p>
-                    </div>
-                </div>
-                <div class="feedback-grid">
-                    <div class="feedback-column">
-                        <h3>
-                            <span class="material-symbols-outlined">list_alt</span>
-                            Live Activity
-                        </h3>
-                        <ul id="live-log-list" class="scrollable-list"></ul>
-                    </div>
-                    <div class="feedback-column">
-                        <h3>
-                            <span class="material-symbols-outlined">summarize</span>
-                            Results
-                        </h3>
-                        <ul id="results-list" class="scrollable-list"></ul>
-                    </div>
-                </div>
+          </div>
+          <div class="onboarding-step">
+            <span class="material-symbols-outlined step-icon premium-icon">upload_file</span>
+            <div>
+              <h4>2. Prepare</h4>
+              <p>Upload your contacts from Excel.</p>
             </div>
+          </div>
+          <div class="onboarding-step">
+            <span class="material-symbols-outlined step-icon premium-icon">rocket_launch</span>
+            <div>
+              <h4>3. Launch</h4>
+              <p>Write your message and launch the session.</p>
+            </div>
+          </div>
         </div>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="app.js"></script>
+        <div id="welcome-log-container" class="log-container"></div>
+        <footer class="welcome-footer">by CA SOLUTION4U &bull; <a href="mailto:ekthar.xd@gmail.com">Support</a></footer>
+      </div>
+    </section>
+    <!-- Main App Container -->
+    <section id="main-app-container" class="main-app">
+      <div class="main-card animate-in">
+        <header class="main-header">
+          <img src="Bee.ico" alt="Beesoft Logo" class="main-logo" />
+          <h1 class="main-title">Beesoft 🐝</h1>
+          <div class="session-controls">
+            <button id="pauseButton" class="macos-btn secondary" title="Pause Session"><span class="material-symbols-outlined">pause</span></button>
+            <button id="resumeButton" class="macos-btn secondary" title="Resume Session" style="display:none;"><span class="material-symbols-outlined">play_arrow</span></button>
+            <button id="resetButton" class="macos-btn danger" title="Reset Session"><span class="material-symbols-outlined">restart_alt</span></button>
+          </div>
+        </header>
+        <div class="session-section">
+          <div class="input-group">
+            <label for="excelFile">Select Excel File</label>
+            <input type="file" id="excelFile" accept=".xlsx,.xls" />
+          </div>
+          <div class="input-group">
+            <label for="message">Message Template</label>
+            <textarea id="message" rows="3" placeholder="Type your message..."></textarea>
+          </div>
+          <div class="input-group image-group">
+            <button id="attachImageBtn" class="macos-btn">Attach Image</button>
+            <span id="imageFileName" class="file-name">No image selected</span>
+          </div>
+          <div id="file-drop-zone" class="file-drop-zone">
+            <span id="file-prompt">Drop Excel file here or click to select</span>
+          </div>
+          <div class="main-actions">
+            <button id="sendButton" class="macos-btn primary">Send</button>
+          </div>
+        </div>
+        <div class="stats-section">
+          <div class="stats">
+            <div><span id="success-count">0</span> SUCCESS</div>
+            <div><span id="failed-count">0</span> FAILED</div>
+            <div><span id="total-count">0</span> TOTAL</div>
+          </div>
+        </div>
+        <div class="log-section">
+          <h3 class="section-title"><span class="material-symbols-outlined">list_alt</span> Live Activity</h3>
+          <ul id="live-log-list" class="log-list"></ul>
+        </div>
+        <div class="results-section">
+          <h3 class="section-title"><span class="material-symbols-outlined">summarize</span> Session Results</h3>
+          <ul id="results-list" class="results-list"></ul>
+        </div>
+        <div id="qr-container" class="qr-section" style="display:none;"></div>
+        <footer class="main-footer">Network: <span id="main-network-info">Loading...</span> &bull; <a href="mailto:ekthar.xd@gmail.com">Contact Support</a></footer>
+      </div>
+    </section>
+  </div>
+  <div id="toast-notification" class="toast"></div>
+  <script src="app.js"></script>
+  <script>
+    // Theme toggle: light -> dark -> pitch black
+    const themeToggle = document.getElementById('theme-toggle');
+    let themeState = 0; // 0: light, 1: dark, 2: pitch black
+    themeToggle.onclick = function() {
+      themeState = (themeState + 1) % 3;
+      document.body.classList.toggle('dark-theme', themeState === 1);
+      document.body.classList.toggle('pitchblack-theme', themeState === 2);
+      if(themeState === 0) themeToggle.innerHTML = '<span class="material-symbols-outlined">dark_mode</span>';
+      if(themeState === 1) themeToggle.innerHTML = '<span class="material-symbols-outlined">light_mode</span>';
+      if(themeState === 2) themeToggle.innerHTML = '<span class="material-symbols-outlined">contrast</span>';
+    };
+    // Network info fetch (IP, speed) with fallback
+    async function updateNetworkInfo() {
+      const infoEls = [document.getElementById('network-info'), document.getElementById('main-network-info')];
+      try {
+        const ipResp = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResp.json();
+        let speed = '...';
+        try {
+          const start = Date.now();
+          await fetch('https://speed.hetzner.de/10MB.bin', { method: 'HEAD' });
+          speed = ((10 / ((Date.now() - start) / 1000)) * 8).toFixed(2); // Mbps approx
+        } catch (e) {
+          speed = 'N/A';
+        }
+        infoEls.forEach(el => {
+          if (el) el.innerHTML = `<b>IP:</b> ${ipData.ip} &nbsp; <b>Speed:</b> ${speed} Mbps`;
+        });
+      } catch (e) {
+        infoEls.forEach(el => {
+          if (el) el.innerHTML = '<span style="color:#ff5a5a">Network details unavailable. <button onclick="updateNetworkInfo()" style="background:none;border:none;color:#007aff;cursor:pointer;">Retry</button></span>';
+        });
+      }
+    }
+    updateNetworkInfo();
+    // Micro-animation for screen transitions
+    function showMainApp() {
+      document.getElementById('welcome-screen').classList.remove('visible');
+      document.getElementById('main-app-container').style.display = 'flex';
+      setTimeout(() => {
+        document.getElementById('main-app-container').classList.add('visible');
+      }, 10);
+    }
+    window.showMainApp = showMainApp;
+    document.getElementById('main-app-container').style.display = 'none';
+    // Reset Session button logic
+    document.addEventListener('DOMContentLoaded', function() {
+      const resetBtn = document.getElementById('resetButton');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+          if (window.resetUI) window.resetUI();
+        });
+      }
+    });
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </body>
 </html>
