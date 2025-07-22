@@ -1,19 +1,17 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
-const { execSync } = require('child_process');
-const puppeteer = require('puppeteer-core');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
 
 let mainWindow;
-let browser;
-let page;
+let waClient;
+let isReady = false;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1400,
-        height: 900,
-        icon: path.join(__dirname, 'public', 'bee.ico'),
+        width: 1400, height: 900,
+        icon: path.join(__dirname, 'public', 'Bee.ico'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true
@@ -23,94 +21,122 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'public', 'index.html'));
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    createWindow();
+    initWhatsAppClient();
+});
+
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 
-ipcMain.handle('connect-whatsapp', async () => {
-    return await startAutomationEngine();
-});
-ipcMain.handle('start-session', async (event, data) => {
-    return await handleBulkSend(data);
-});
-
 function sendToUI(type, payload) {
+    if (type === 'log' && payload && payload.message) {
+        console.log(`[${payload.level || 'info'}] ${payload.message}`);
+    }
     if (mainWindow) {
         mainWindow.webContents.send('update', { type, ...payload });
     }
 }
 
-async function startAutomationEngine() {
-    sendToUI('log', { level: 'info', message: 'Launching Automation Engine...' });
-    let executablePath;
-    try {
-        if (os.platform() === 'win32') {
-            const command = 'reg query "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe" /ve';
-            const stdout = execSync(command).toString();
-            const match = stdout.match(/REG_SZ\s+(.*)/);
-            if (match && match[1]) executablePath = match[1].trim();
-            else throw new Error('Could not parse registry query output.');
-        } else { throw new Error('Unsupported platform.'); }
-        if (!fs.existsSync(executablePath)) throw new Error('Detected Chrome path does not exist.');
-    } catch (e) {
-        const msg = `Error: Could not find Google Chrome. ${e.message}`;
-        sendToUI('log', { level: 'error', message: 'Could not find Google Chrome. Please install it.' });
-        return { success: false, message: msg };
-    }
+ipcMain.handle('select-image', async () => {
+    const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+            { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] }
+        ]
+    });
+    if (result.canceled || !result.filePaths.length) return null;
+    return result.filePaths[0];
+});
 
-    try {
-        // --- THIS IS THE DEFINITIVE FIX ---
-        // Get Electron's official userData path, which is always writeable,
-        // e.g., C:\Users\Ekthar\AppData\Roaming\Beesoft
-        const userDataPath = app.getPath('userData');
-        // Create a dedicated subfolder for our session data within that path.
-        const sessionPath = path.join(userDataPath, 'whatsapp_session');
-        console.log(`Using session data path: ${sessionPath}`);
-        // ---------------------------------
+function initWhatsAppClient() {
+    waClient = new Client({
+        authStrategy: new LocalAuth(),
+        puppeteer: { headless: false }
+    });
 
-        browser = await puppeteer.launch({ 
-            headless: false, 
-            userDataDir: sessionPath, // Use the new, correct, and always-writeable path
-            args: ['--start-maximized'], 
-            defaultViewport: null, 
-            executablePath: executablePath 
-        });
+    waClient.on('qr', qr => {
+        // Show QR in terminal and send to UI as text (optionally render as image in UI)
+        qrcode.generate(qr, { small: true });
+        sendToUI('log', { level: 'info', message: 'Scan the QR code in the terminal to login to WhatsApp.' });
+        sendToUI('qr', { qr }); // Send QR to renderer
+    });
 
-        page = (await browser.pages())[0];
-        await page.goto('https://web.whatsapp.com', { waitUntil: 'networkidle0' });
-        const msg = 'Engine connected to WhatsApp Web. Ready for your session.';
-        sendToUI('log', { level: 'success', message: msg });
-        return { success: true, message: msg };
-    } catch (err) {
-        const msg = `Failed to launch WhatsApp Web: ${err.message}`;
-        sendToUI('log', { level: 'error', message: 'Failed to launch WhatsApp Web.' });
-        return { success: false, message: msg };
-    }
+    waClient.on('ready', () => {
+        isReady = true;
+        sendToUI('log', { level: 'success', message: 'WhatsApp Web client is ready!' });
+    });
+
+    waClient.on('auth_failure', () => {
+        isReady = false;
+        sendToUI('log', { level: 'error', message: 'WhatsApp authentication failed. Please restart the app.' });
+    });
+
+    waClient.on('disconnected', () => {
+        isReady = false;
+        sendToUI('log', { level: 'error', message: 'WhatsApp client disconnected. Please restart the app.' });
+    });
+
+    waClient.initialize();
 }
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
+ipcMain.handle('connect-whatsapp', async () => {
+    if (isReady) {
+        return { success: true, message: 'WhatsApp already connected.' };
+    } else {
+        return { success: false, message: 'Waiting for WhatsApp login. Scan the QR code in the terminal.' };
+    }
+});
 
-async function handleBulkSend({ numbers, message }) {
-    if (!page) { sendToUI('log', { level: 'error', message: 'WhatsApp page not ready.' }); return; }
-    sendToUI('log', { level: 'info', message: `Starting session for ${numbers.length} numbers.` });
+ipcMain.handle('start-session', async (event, data) => {
+    if (!isReady) {
+        sendToUI('log', { level: 'error', message: 'WhatsApp is not connected. Please connect first.' });
+        return { success: false, message: 'WhatsApp not connected.' };
+    }
+    const { numbers, message, imagePath } = data;
+    sendToUI('log', { level: 'info', message: `Session handler entered. Numbers: ${JSON.stringify(numbers)}, message: ${message}, imagePath: ${imagePath}` });
+
     let successCount = 0, errorCount = 0, errorNumbers = [];
-    for (const number of numbers) {
-        sendToUI('log', { level: 'info', message: `Processing: ${number}` });
+    sendToUI('log', { level: 'info', message: `Starting session for ${numbers.length} numbers.` });
+
+    let media = null;
+    let absImagePath = imagePath ? path.resolve(imagePath) : null;
+    if (absImagePath && fs.existsSync(absImagePath)) {
+        sendToUI('log', { level: 'info', message: `Image file found: ${absImagePath}` });
         try {
-            await page.bringToFront();
-            const chatUrl = `https://web.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(message)}`;
-            await page.goto(chatUrl, { waitUntil: 'networkidle0' });
-            const messageBoxSelector = 'div[contenteditable="true"][data-tab="10"]';
-            await page.waitForSelector(messageBoxSelector, { timeout: 20000 });
-            await delay(1200);
-            await page.keyboard.press('Enter');
-            await delay(1500);
-            successCount++;
-            sendToUI('update', { status: 'success', number, successCount, errorCount });
-        } catch (error) {
-            const errorMsg = `Failed for ${number}: ${error.message.split('\n')[0]}`;
-            errorCount++; errorNumbers.push(number);
+            media = MessageMedia.fromFilePath(absImagePath);
+            sendToUI('log', { level: 'info', message: `Image loaded for sending.` });
+        } catch (e) {
+            sendToUI('log', { level: 'error', message: 'Failed to load image.' });
+        }
+    } else if (imagePath) {
+        sendToUI('log', { level: 'error', message: `Image file not found: ${absImagePath}` });
+    }
+
+    sendToUI('log', { level: 'info', message: `About to enter for loop. Numbers: ${JSON.stringify(numbers)}` });
+
+    for (const numberRaw of numbers) {
+        sendToUI('log', { level: 'info', message: `Processing number: ${numberRaw}` });
+        let number = String(numberRaw).replace(/\D/g, '');
+        if (number.length === 10) number = '91' + number;
+        number = number + '@c.us';
+        try {
+            if (media) {
+                sendToUI('log', { level: 'info', message: `Sending image with caption to ${number}` });
+                await waClient.sendMessage(number, media, { caption: message });
+                sendToUI('update', { status: 'success', number, successCount: ++successCount, errorCount });
+            } else {
+                sendToUI('log', { level: 'info', message: `Sending text message to ${number}` });
+                await waClient.sendMessage(number, message);
+                sendToUI('update', { status: 'success', number, successCount: ++successCount, errorCount });
+            }
+        } catch (err) {
+            sendToUI('log', { level: 'error', message: `Failed to send to ${number}: ${err.message}` });
+            errorCount++;
+            errorNumbers.push(number);
             sendToUI('update', { status: 'fail', number, successCount, errorCount, errorNumbers });
         }
     }
+    sendToUI('log', { level: 'info', message: `For loop complete. Success: ${successCount}, Failed: ${errorCount}` });
     sendToUI('finished', { summary: `Finished. Success: ${successCount}, Failed: ${errorCount}.` });
-}
+    return { success: true, message: 'Session complete.' };
+});
