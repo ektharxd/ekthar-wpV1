@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beesoft Admin Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f5f6fa;
+      color: #333;
+    }
+    
+    .admin-header {
+      background: #4f8cff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .admin-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    
+    .stat-card {
+      background: #4f8cff;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .user-table th,
+    .user-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .user-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin: 0 5px;
+    }
+    
+    .btn-approve {
+      background: #34c759;
+      color: white;
+    }
+    
+    .btn-reject {
+      background: #ff5a5a;
+      color: white;
+    }
+    
+    .btn-activate {
+      background: #4f8cff;
+      color: white;
+    }
+    
+    .status-active {
+      color: #34c759;
+      font-weight: bold;
+    }
+    
+    .status-trial {
+      color: #ff9500;
+      font-weight: bold;
+    }
+    
+    .status-expired {
+      color: #ff5a5a;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <h1>🐝 Beesoft Admin Dashboard</h1>
+    <p>Manage users, trials, and activations</p>
+  </div>
+
+  <div class="admin-container">
+    <!-- Stats Overview -->
+    <div class="admin-card">
+      <h2>📊 Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="total-users">0</div>
+          <div>Total Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="active-trials">0</div>
+          <div>Active Trials</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="activated-users">0</div>
+          <div>Activated Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="pending-requests">0</div>
+          <div>Pending Requests</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="admin-card">
+      <h2>👥 User Management</h2>
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Trial Days Left</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-table">
+          <!-- Users will be populated here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Trial Requests -->
+    <div class="admin-card">
+      <h2>📝 Trial Requests</h2>
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Requested</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="requests-table">
+          <!-- Requests will be populated here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="admin-card">
+      <h2>⚡ Quick Actions</h2>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-activate" onclick="generateActivationKey()">Generate Activation Key</button>
+        <button class="btn btn-approve" onclick="approveAllPending()">Approve All Pending</button>
+        <button class="btn btn-reject" onclick="clearExpiredTrials()">Clear Expired Trials</button>
+        <button class="btn" onclick="exportUserData()" style="background: #666; color: white;">Export User Data</button>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <h3>Generated Activation Key:</h3>
+        <div id="generated-key" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 1.1rem;">
+          Click "Generate Activation Key" to create a new key
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    console.log('🔧 Admin Dashboard loaded');
+
+    // Mock data for demonstration
+    const mockUsers = [
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@example.com',
+        status: 'trial',
+        trialStart: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        activated: false
+      },
+      {
+        id: 2,
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        status: 'activated',
+        trialStart: null,
+        activated: true
+      },
+      {
+        id: 3,
+        name: 'Bob Wilson',
+        email: 'bob@example.com',
+        status: 'expired',
+        trialStart: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        activated: false
+      }
+    ];
+
+    const mockRequests = [
+      {
+        id: 1,
+        name: 'Alice Johnson',
+        email: 'alice@example.com',
+        requested: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+      },
+      {
+        id: 2,
+        name: 'Charlie Brown',
+        email: 'charlie@example.com',
+        requested: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
+      }
+    ];
+
+    function calculateTrialDaysLeft(trialStart) {
+      if (!trialStart) return 0;
+      const now = new Date();
+      const start = new Date(trialStart);
+      const diffTime = now - start;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, 3 - diffDays);
+    }
+
+    function getStatusClass(status) {
+      switch (status) {
+        case 'activated': return 'status-active';
+        case 'trial': return 'status-trial';
+        case 'expired': return 'status-expired';
+        default: return '';
+      }
+    }
+
+    function updateStats() {
+      const totalUsers = mockUsers.length;
+      const activeTrials = mockUsers.filter(u => u.status === 'trial').length;
+      const activatedUsers = mockUsers.filter(u => u.activated).length;
+      const pendingRequests = mockRequests.length;
+
+      document.getElementById('total-users').textContent = totalUsers;
+      document.getElementById('active-trials').textContent = activeTrials;
+      document.getElementById('activated-users').textContent = activatedUsers;
+      document.getElementById('pending-requests').textContent = pendingRequests;
+    }
+
+    function renderUsers() {
+      const tbody = document.getElementById('users-table');
+      tbody.innerHTML = '';
+
+      mockUsers.forEach(user => {
+        const daysLeft = user.status === 'trial' ? calculateTrialDaysLeft(user.trialStart) : '-';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td><span class="${getStatusClass(user.status)}">${user.status.toUpperCase()}</span></td>
+          <td>${daysLeft}</td>
+          <td>
+            <button class="btn btn-activate" onclick="activateUser(${user.id})">Activate</button>
+            <button class="btn btn-reject" onclick="revokeUser(${user.id})">Revoke</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderRequests() {
+      const tbody = document.getElementById('requests-table');
+      tbody.innerHTML = '';
+
+      mockRequests.forEach(request => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${request.name}</td>
+          <td>${request.email}</td>
+          <td>${request.requested.toLocaleString()}</td>
+          <td>
+            <button class="btn btn-approve" onclick="approveRequest(${request.id})">Approve</button>
+            <button class="btn btn-reject" onclick="rejectRequest(${request.id})">Reject</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Admin Actions
+    function activateUser(userId) {
+      const user = mockUsers.find(u => u.id === userId);
+      if (user) {
+        user.status = 'activated';
+        user.activated = true;
+        alert(`User ${user.name} has been activated!`);
+        renderUsers();
+        updateStats();
+      }
+    }
+
+    function revokeUser(userId) {
+      const user = mockUsers.find(u => u.id === userId);
+      if (user) {
+        user.status = 'expired';
+        user.activated = false;
+        alert(`User ${user.name} access has been revoked!`);
+        renderUsers();
+        updateStats();
+      }
+    }
+
+    function approveRequest(requestId) {
+      const request = mockRequests.find(r => r.id === requestId);
+      if (request) {
+        // Add to users with trial
+        mockUsers.push({
+          id: mockUsers.length + 1,
+          name: request.name,
+          email: request.email,
+          status: 'trial',
+          trialStart: new Date(),
+          activated: false
+        });
+        
+        // Remove from requests
+        const index = mockRequests.findIndex(r => r.id === requestId);
+        mockRequests.splice(index, 1);
+        
+        alert(`Trial approved for ${request.name}!`);
+        renderUsers();
+        renderRequests();
+        updateStats();
+      }
+    }
+
+    function rejectRequest(requestId) {
+      const request = mockRequests.find(r => r.id === requestId);
+      if (request) {
+        const index = mockRequests.findIndex(r => r.id === requestId);
+        mockRequests.splice(index, 1);
+        alert(`Request rejected for ${request.name}!`);
+        renderRequests();
+        updateStats();
+      }
+    }
+
+    function generateActivationKey() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let key = 'BEESOFT-';
+      for (let i = 0; i < 12; i++) {
+        key += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('generated-key').textContent = key;
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(key).then(() => {
+        alert('Activation key generated and copied to clipboard!');
+      });
+    }
+
+    function approveAllPending() {
+      if (confirm(`Approve all ${mockRequests.length} pending requests?`)) {
+        mockRequests.forEach(request => {
+          mockUsers.push({
+            id: mockUsers.length + 1,
+            name: request.name,
+            email: request.email,
+            status: 'trial',
+            trialStart: new Date(),
+            activated: false
+          });
+        });
+        mockRequests.length = 0;
+        alert('All pending requests approved!');
+        renderUsers();
+        renderRequests();
+        updateStats();
+      }
+    }
+
+    function clearExpiredTrials() {
+      const expiredCount = mockUsers.filter(u => u.status === 'expired').length;
+      if (confirm(`Remove ${expiredCount} expired trial users?`)) {
+        for (let i = mockUsers.length - 1; i >= 0; i--) {
+          if (mockUsers[i].status === 'expired') {
+            mockUsers.splice(i, 1);
+          }
+        }
+        alert(`${expiredCount} expired users removed!`);
+        renderUsers();
+        updateStats();
+      }
+    }
+
+    function exportUserData() {
+      const data = {
+        users: mockUsers,
+        requests: mockRequests,
+        exportDate: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `beesoft-users-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialize dashboard
+    updateStats();
+    renderUsers();
+    renderRequests();
+
+    console.log('✅ Admin Dashboard initialized');
+  </script>
+</body>
+</html>

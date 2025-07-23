@@ -1,0 +1,13 @@
+# Node.js dependencies
+/node_modules
+/dist
+.env
+.qodo/
+/.wwebjs_auth
+/.wwebjs_cache
+/whatsapp_session
+BeesoftProjectBackup.zip
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*

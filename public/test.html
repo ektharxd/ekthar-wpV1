@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trial Modal Test</title>
+    <style>
+        .trial-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99999;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .trial-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+        .macos-btn {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #007aff;
+            color: white;
+            cursor: pointer;
+        }
+        .macos-input {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div id="trial-modal" class="trial-modal">
+        <div class="trial-modal-content">
+            <h2>Trial/Activation Required</h2>
+            <p>This is a test of the trial modal</p>
+            <button class="macos-btn">Start Trial</button>
+            <br>
+            <input type="text" class="macos-input" placeholder="Activation key...">
+            <button class="macos-btn">Activate</button>
+        </div>
+    </div>
+    <div style="padding: 20px; filter: blur(6px);">
+        <h1>Main App Content (Blurred)</h1>
+        <p>This content should be blurred when the modal is shown.</p>
+    </div>
+</body>
+</html>

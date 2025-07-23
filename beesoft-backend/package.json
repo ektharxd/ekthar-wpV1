@@ -1,0 +1,17 @@
+{
+  "name": "beesoft-backend",
+  "version": "1.0.0",
+  "description": "Beesoft backend for Google Auth and admin-controlled trial/activation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.19.2",
+    "google-auth-library": "^9.0.0",
+    "mongodb": "4.1",
+    "mongoose": "^7.0.3"
+  }
+}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Activation</title>
+</head>
+<body>
+    <h1>Debug Activation Issue</h1>
+    <input type="text" id="test-input" placeholder="Enter ekthar.xd" />
+    <button onclick="testActivation()">Test</button>
+    <div id="result"></div>
+    
+    <script>
+        const ACTIVATION_KEY = "ekthar.xd";
+        
+        function testActivation() {
+            const input = document.getElementById('test-input');
+            const result = document.getElementById('result');
+            const key = input.value.trim();
+            
+            result.innerHTML = `
+                <p>Input value: "${key}"</p>
+                <p>Expected: "${ACTIVATION_KEY}"</p>
+                <p>Length: ${key.length} vs ${ACTIVATION_KEY.length}</p>
+                <p>Match: ${key === ACTIVATION_KEY}</p>
+                <p>Char codes: ${key.split('').map(c => c.charCodeAt(0)).join(',')}</p>
+                <p>Expected codes: ${ACTIVATION_KEY.split('').map(c => c.charCodeAt(0)).join(',')}</p>
+            `;
+            
+            if (key === ACTIVATION_KEY) {
+                result.innerHTML += '<p style="color: green;">✅ ACTIVATION WORKS!</p>';
+                localStorage.setItem('beesoft_activated', 'true');
+                localStorage.setItem('beesoft_key', key);
+            } else {
+                result.innerHTML += '<p style="color: red;">❌ ACTIVATION FAILED!</p>';
+            }
+        }
+    </script>
+</body>
+</html>

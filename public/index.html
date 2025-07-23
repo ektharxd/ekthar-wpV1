@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beesoft 🐝 - WhatsApp Automation</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <!-- Login Page -->
+  <section id="login-page" class="page-center" style="display:flex;">
+    <div class="card login-card">
+      <img src="Bee.ico" alt="Beesoft Logo" class="logo" />
+      <h2 class="title">Welcome to Beesoft 🐝</h2>
+      <div class="desc">Premium WhatsApp automation for professionals.</div>
+      <div id="google-login"></div>
+      <button id="start-trial" class="btn primary" style="margin-top:18px;">Start Free Trial</button>
+      <button id="activate" class="btn" style="margin-top:10px;">Activate</button>
+      <input id="activation-key" type="text" placeholder="Enter activation key" class="input-group" style="margin-top:10px;width:100%;border-radius:12px;padding:12px;border:1.5px solid #232526;background:#151515;color:#fff;" />
+      <div id="error-msg" class="error"></div>
+      <div id="success-msg" class="success"></div>
+    </div>
+  </section>
+  <!-- Main App Page -->
+  <div id="main-app">
+    <section id="main-app-page" class="page-center" style="display:none;">
+      <div class="card main-app-card">
+        <header class="header" style="display:flex;align-items:center;gap:18px;margin-bottom:24px;">
+          <img src="Bee.ico" alt="Beesoft Logo" class="logo" />
+          <h1 class="title">Beesoft 🐝</h1>
+        </header>
+        <div id="status-msg" class="status" style="margin-bottom:18px;"></div>
+        <div id="user-info" style="display:none;"></div>
+        <div class="main-ui">
+          <div class="input-group">
+            <label for="excelFile">Select Excel File</label>
+            <input type="file" id="excelFile" accept=".xlsx,.xls" />
+          </div>
+          <div class="input-group">
+            <label for="message">Message Template</label>
+            <textarea id="message" rows="3" placeholder="Type your message..."></textarea>
+          </div>
+          <div class="input-group">
+            <button id="attachImageBtn" class="btn">Attach Image</button>
+            <span id="imageFileName" class="file-name">No image selected</span>
+          </div>
+          <div id="file-drop-zone" class="file-drop-zone">
+            <span id="file-prompt">Drop Excel file here or click to select</span>
+          </div>
+          <div class="main-actions" style="display:flex;gap:10px;">
+            <button id="connect-btn" class="btn">Connect WhatsApp</button>
+            <button id="sendButton" class="btn primary">Send Message</button>
+            <button id="pauseButton" class="btn">Pause</button>
+            <button id="continueButton" class="btn">Continue</button>
+            <button id="stopButton" class="btn danger">Stop</button>
+          </div>
+        </div>
+        <div class="stats-section">
+          <div class="stats">
+            <div><span id="success-count">0</span> SUCCESS</div>
+            <div><span id="failed-count">0</span> FAILED</div>
+            <div><span id="total-count">0</span> TOTAL</div>
+          </div>
+        </div>
+        <div class="log-section">
+          <h3 class="section-title">Live Activity</h3>
+          <ul id="live-log-list" class="log-list"></ul>
+        </div>
+        <div class="results-section">
+          <h3 class="section-title">Session Results</h3>
+          <ul id="results-list" class="results-list"></ul>
+        </div>
+        <div id="qr-container" class="qr-section" style="display:none;"></div>
+        <footer class="footer">Network: <span id="main-network-info">Loading...</span> &bull; <a href="mailto:ekthar.xd@gmail.com">Contact Support</a></footer>
+      </div>
+    </section>
+  </div>
+  <button class="fab" id="fab-send" title="Send" style="display:none;">
+    <span class="material-symbols-outlined">send</span>
+  </button>
+  <div id="toast-notification" class="toast"></div>
+  <div id="modal" style="display:none;"></div>
+  <script src="app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</body>
+</html>
