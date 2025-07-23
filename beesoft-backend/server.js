@@ -120,4 +120,4 @@ app.post('/api/admin/activate', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4100;
-app.listen(PORT, () => console.log(`Beesoft backend running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Beesoft backend running on port ${PORT}`));
