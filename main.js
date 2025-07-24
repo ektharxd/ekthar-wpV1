@@ -18,8 +18,8 @@ function createWindow() {
         }
     });
     mainWindow.setMenu(null);
-    // Load from local server instead of file://
-    mainWindow.loadURL('http://localhost:5000');
+    // Load from local file instead of server
+    mainWindow.loadFile(path.join(__dirname, 'public', 'index.html'));
     mainWindow.webContents.openDevTools();
 }
 

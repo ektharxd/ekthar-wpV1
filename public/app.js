@@ -1,66 +1,285 @@
-// --- Google Identity Services Login ---
-const loginPage = document.getElementById('login-page');
-const mainAppPage = document.getElementById('main-app-page');
-const errorMsg = document.getElementById('error-msg');
-const successMsg = document.getElementById('success-msg');
-let user = null;
+document.addEventListener('DOMContentLoaded', function() {
+  // --- THEME SWITCHER ---
+  const themeCheckbox = document.getElementById('theme-checkbox');
+  const currentTheme = localStorage.getItem('theme');
 
-function showError(message) {
-  if (errorMsg) {
-    errorMsg.textContent = message;
-    errorMsg.style.display = 'block';
+  if (currentTheme) {
+      document.documentElement.setAttribute('data-theme', currentTheme);
+    
+      if (currentTheme === 'dark') {
+          themeCheckbox.checked = true;
+      }
   }
-  if (successMsg) successMsg.style.display = 'none';
-}
-function showSuccess(message) {
-  if (successMsg) {
-    successMsg.textContent = message;
-    successMsg.style.display = 'block';
-  }
-  if (errorMsg) errorMsg.style.display = 'none';
-}
-function clearMessages() {
-  if (errorMsg) errorMsg.style.display = 'none';
-  if (successMsg) successMsg.style.display = 'none';
-}
 
-window.onload = function() {
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    window.google.accounts.id.initialize({
-      client_id: '772148919938-sjr2i8bi34ncr95tq9foa9ufhaask9cv.apps.googleusercontent.com',
-      callback: handleCredentialResponse
+  themeCheckbox.addEventListener('change', function() {
+      if(this.checked) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+      } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          localStorage.setItem('theme', 'light');
+      }
+  });
+
+  // --- Page Elements ---
+  const welcomePage = document.getElementById('welcome-page');
+  const mainAppPage = document.getElementById('main-app-page');
+  const trialLockPage = document.getElementById('trial-lock-page');
+
+  // --- Trial/Admin Elements ---
+  const adminLoginBtn = document.getElementById('admin-login-btn');
+  const adminLoginForm = document.getElementById('admin-login-form');
+  const adminAuthBtn = document.getElementById('admin-auth-btn');
+  const adminLoginError = document.getElementById('admin-login-error');
+  const trialInfo = document.getElementById('trial-info');
+  const statusAlert = document.getElementById('status-alert');
+
+  // --- Modal Elements ---
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalOk = document.getElementById('modal-ok');
+  const modalCancel = document.getElementById('modal-cancel');
+  const modalError = document.getElementById('modal-error');
+
+  // --- Utility Functions ---
+  function encrypt(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function decrypt(str) { try { return decodeURIComponent(escape(atob(str))); } catch { return ''; } }
+
+  function getTrialData() {
+    const data = localStorage.getItem('beesoft_trial');
+    if (!data) return null;
+    try { return JSON.parse(decrypt(data)); } catch { return null; }
+  }
+  function setTrialData(obj) {
+    localStorage.setItem('beesoft_trial', encrypt(JSON.stringify(obj)));
+  }
+  function getAdminData() {
+    const data = localStorage.getItem('beesoft_admin');
+    if (!data) return null;
+    try { return JSON.parse(decrypt(data)); } catch { return null; }
+  }
+  function setAdminData(obj) {
+    localStorage.setItem('beesoft_admin', encrypt(JSON.stringify(obj)));
+  }
+
+  // --- Page Display Logic ---
+  function showPage(pageToShow) {
+    console.log(`Attempting to show page: ${pageToShow}`);
+    [welcomePage, mainAppPage, trialLockPage].forEach(page => {
+      if (page) page.style.display = 'none';
     });
-    window.google.accounts.id.renderButton(
-      document.getElementById('google-login'),
-      { theme: 'outline', size: 'large' }
-    );
+    const pageElement = document.getElementById(pageToShow);
+    if (pageElement) {
+      pageElement.style.display = 'flex';
+      console.log(`Successfully displayed page: ${pageToShow}`);
+    } else {
+      console.error(`Page element not found: ${pageToShow}`);
+    }
   }
-};
 
-function handleCredentialResponse(response) {
-  // Decode JWT to get user info
-  const base64Url = response.credential.split('.')[1];
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  const jsonPayload = decodeURIComponent(
-    atob(base64)
-      .split('')
-      .map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join('')
-  );
-  user = JSON.parse(jsonPayload);
-  localStorage.setItem('beesoft_google_user', JSON.stringify(user));
-  showSuccess('Google login successful!');
-  setTimeout(() => {
-    if (loginPage) loginPage.style.display = 'none';
-    if (mainAppPage) mainAppPage.style.display = 'flex';
-    initMainUI();
-  }, 800);
-}
+  // --- Modal Dialog for Input ---
+  function showModal({title, bodyHTML, okText, cancelText, onOk, onCancel, validate}) {
+    if (!modal) return;
+    modalTitle.textContent = title || '';
+    modalBody.innerHTML = bodyHTML || '';
+    modalOk.textContent = okText || 'OK';
+    modalCancel.textContent = cancelText || 'Cancel';
+    modal.style.display = 'flex';
+    modalError.textContent = '';
 
-// --- Main UI Logic (from ekthar-wpV1) ---
+    modalOk.onclick = () => {
+      if (validate && !validate()) return;
+      modal.style.display = 'none';
+      if (onOk) onOk();
+    };
+    modalCancel.onclick = () => {
+      modal.style.display = 'none';
+      if (onCancel) onCancel();
+    };
+  }
+
+  // --- Trial Check Logic ---
+  function checkTrial() {
+    console.log("Checking trial status...");
+    const trial = getTrialData();
+
+    if (!trial) {
+      console.log("No trial data found. App is locked.");
+      showPage('trial-lock-page');
+      if(trialInfo) trialInfo.textContent = 'This software is not activated. Please contact an administrator.';
+      return;
+    }
+
+    if (trial.activated) {
+      console.log("App is activated.");
+      if(statusAlert) {
+        statusAlert.textContent = "Application is permanently activated.";
+        statusAlert.style.display = 'block';
+        setTimeout(() => { statusAlert.style.display = 'none'; }, 5000);
+      }
+      showPage('welcome-page');
+      return;
+    }
+
+    const now = Date.now();
+    const expiryDate = trial.start + (trial.days * 24 * 60 * 60 * 1000);
+    if (now > expiryDate) {
+      console.log("Trial has expired.");
+      showPage('trial-lock-page');
+      if(trialInfo) trialInfo.textContent = `Trial expired on ${new Date(expiryDate).toLocaleDateString()}.`;
+      return;
+    }
+
+    const daysLeft = Math.ceil((expiryDate - now) / (24 * 60 * 60 * 1000));
+    console.log(`Trial is active. ${daysLeft} days left.`);
+    if(statusAlert) {
+      statusAlert.textContent = `Trial active. You have ${daysLeft} days left.`
+      statusAlert.style.display = 'block';
+      setTimeout(() => { statusAlert.style.display = 'none'; }, 5000);
+    }
+    showPage('welcome-page');
+  }
+
+  // --- Admin Login Logic ---
+  if (adminLoginBtn) {
+    adminLoginBtn.onclick = () => {
+      console.log("Admin login button clicked.");
+      const form = document.getElementById('admin-login-form');
+      if (form) {
+        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+      }
+      const errorEl = document.getElementById('admin-login-error');
+      if(errorEl) errorEl.textContent = '';
+    };
+  }
+
+  if (adminAuthBtn) {
+    adminAuthBtn.onclick = () => {
+      const username = document.getElementById('admin-username').value.trim();
+      const password = document.getElementById('admin-password').value.trim();
+      let admin = getAdminData();
+
+      if (!admin) {
+        admin = { username: 'admin', password: 'beesoft@2025' };
+      }
+
+      if (admin.username === username && admin.password === password) {
+        console.log("Admin authenticated successfully.");
+        showModal({
+          title: 'Admin Actions',
+          bodyHTML: '<div class="input-group"><input id="trial-days-input" type="number" min="1" max="365" placeholder="Set new trial days"></div>' + 
+                    '<button id="test-expiry-btn" class="btn m3-outlined">Test Trial Expiry</button>',
+          okText: 'Update Trial',
+          cancelText: 'Activate App',
+          validate: () => {
+            const val = document.getElementById('trial-days-input').value;
+            if (!val || isNaN(val) || val < 1) {
+              const modalError = document.getElementById('modal-error');
+              if(modalError) modalError.textContent = 'Please enter valid days.';
+              return false;
+            }
+            return true;
+          },
+          onOk: () => {
+            const days = parseInt(document.getElementById('trial-days-input').value);
+            setTrialData({ start: Date.now(), days, activated: false });
+            alert('Trial period updated. The app will now reload.');
+            location.reload();
+          },
+          onCancel: () => {
+            setTrialData({ start: Date.now(), days: 9999, activated: true });
+            alert('Application activated! The app will now reload.');
+            location.reload();
+          }
+        });
+        // Add event listener for the test expiry button
+        const testExpiryBtn = document.getElementById('test-expiry-btn');
+        if(testExpiryBtn) {
+            testExpiryBtn.onclick = () => {
+                setTrialData({ start: Date.now() - 8 * 24 * 60 * 60 * 1000, days: 7, activated: false }); // Set start date to 1 day ago
+                alert('Trial start date set to the past. The app will now reload to show the expired state.');
+                location.reload();
+            };
+        }
+      } else {
+        console.error("Invalid admin credentials entered.");
+        const errorEl = document.getElementById('admin-login-error');
+        if (errorEl) errorEl.textContent = 'Invalid admin credentials.';
+      }
+    };
+  }
+
+  // --- Initial Setup ---
+  const getStartedBtn = document.getElementById('get-started-btn');
+  if (getStartedBtn) {
+    getStartedBtn.onclick = () => {
+      initMainUI();
+      showPage('main-app-page');
+    };
+  }
+
+  const clearDataBtn = document.getElementById('clear-data-btn');
+  if (clearDataBtn) {
+    clearDataBtn.onclick = () => {
+      showModal({
+        title: 'Clear Local Data',
+        bodyHTML: 'Are you sure you want to clear all local data, including trial and admin info? This cannot be undone.',
+        okText: 'Clear Data',
+        cancelText: 'Cancel',
+        onOk: () => {
+          localStorage.clear();
+          alert('Local data cleared. The app will now reload.');
+          location.reload();
+        }
+      });
+    };
+  }
+
+  checkTrial(); // Initial check to set the correct page
+
+  // --- Network Details Logic ---
+  function updateNetworkDetails() {
+    console.log("Updating network details...");
+    const ipEl = document.getElementById('network-ip');
+    const pingEl = document.getElementById('network-ping');
+    const statusEl = document.getElementById('network-status');
+    const connEl = document.getElementById('network-conn');
+
+    // IP Address
+    if(ipEl) fetch('https://api.ipify.org?format=json').then(r => r.json()).then(data => ipEl.textContent = data.ip).catch(() => ipEl.textContent = 'Unavailable');
+    
+    // Ping
+    function updatePing() {
+      if(!pingEl) return;
+      const start = Date.now();
+      fetch('https://1.1.1.1/cdn-cgi/trace', {cache:'no-store',mode:'no-cors'}).then(() => pingEl.textContent = (Date.now() - start) + ' ms').catch(() => pingEl.textContent = 'Unavailable');
+    }
+    updatePing();
+    setInterval(updatePing, 5000);
+
+    // Status & Connection
+    function updateStatus() {
+      if(statusEl) statusEl.textContent = navigator.onLine ? 'Online' : 'Offline';
+      if(connEl) {
+        if (navigator.connection && navigator.connection.effectiveType) {
+          connEl.textContent = navigator.connection.effectiveType;
+        } else {
+          connEl.textContent = 'Unknown';
+        }
+      }
+    }
+    updateStatus();
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    if (navigator.connection) navigator.connection.addEventListener('change', updateStatus);
+  }
+  updateNetworkDetails();
+});
+
+// --- Main App UI Logic ---
 function initMainUI() {
+  console.log("Initializing Main UI...");
   // Element Selectors
   const qrContainer = document.getElementById('qr-container');
   const sendButton = document.getElementById('sendButton');
@@ -108,6 +327,7 @@ function initMainUI() {
     setTimeout(() => { toast.style.opacity = '0'; }, 2500);
   }
   function createLogger(container) {
+    if (!container) return () => {}; // Return a no-op function if container is not found
     return (message, level = 'info') => {
       const item = document.createElement('li');
       item.className = `list-item log-entry ${level}`;
@@ -119,46 +339,46 @@ function initMainUI() {
   }
   // File Handling
   function handleFileSelect(file) {
-    fileDropZone.classList.add('has-file');
-    filePrompt.textContent = file.name;
+    if(fileDropZone) fileDropZone.classList.add('has-file');
+    if(filePrompt) filePrompt.textContent = file.name;
     validateForm();
   }
   // Drag and Drop Handlers
-  fileDropZone.addEventListener('click', () => fileInput.click());
-  fileDropZone.addEventListener('dragover', (e) => {
+  if(fileDropZone) fileDropZone.addEventListener('click', () => fileInput.click());
+  if(fileDropZone) fileDropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     fileDropZone.classList.add('drag-over');
   });
-  fileDropZone.addEventListener('dragleave', () => {
+  if(fileDropZone) fileDropZone.addEventListener('dragleave', () => {
     fileDropZone.classList.remove('drag-over');
   });
-  fileDropZone.addEventListener('drop', (e) => {
+  if(fileDropZone) fileDropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     fileDropZone.classList.remove('drag-over');
     if (e.dataTransfer.files.length > 0) {
       handleFileSelect(e.dataTransfer.files[0]);
-      fileInput.files = e.dataTransfer.files;
+      if(fileInput) fileInput.files = e.dataTransfer.files;
     }
   });
-  fileInput.addEventListener('change', () => {
+  if(fileInput) fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) {
       handleFileSelect(fileInput.files[0]);
     }
   });
   // Image Handling (Electron dialog)
-  attachImageBtn.addEventListener('click', async () => {
+  if(attachImageBtn) attachImageBtn.addEventListener('click', async () => {
     if (window.electronAPI && window.electronAPI.selectImage) {
       const filePath = await window.electronAPI.selectImage();
       if (filePath) {
         selectedImagePath = filePath;
         const fileName = filePath.split(/[\\/]/).pop();
-        imageFileName.textContent = fileName;
-        imageFileName.title = filePath;
+        if(imageFileName) imageFileName.textContent = fileName;
+        if(imageFileName) imageFileName.title = filePath;
         logToUI(`Image selected: ${selectedImagePath}`, 'info');
       } else {
         selectedImagePath = null;
-        imageFileName.textContent = 'No image selected';
-        imageFileName.title = '';
+        if(imageFileName) imageFileName.textContent = 'No image selected';
+        if(imageFileName) imageFileName.title = '';
         logToUI('Image selection cancelled or no file selected', 'error');
       }
     } else {
@@ -167,36 +387,41 @@ function initMainUI() {
   });
   // Form Validation
   function validateForm() {
-    const hasFile = fileInput.files.length > 0;
-    const hasMessage = messageInput.value.trim().length > 0;
+    if(!sendButton) return;
+    const hasFile = fileInput && fileInput.files.length > 0;
+    const hasMessage = messageInput && messageInput.value.trim().length > 0;
     sendButton.disabled = !(hasFile && hasMessage);
   }
-  messageInput.addEventListener('input', validateForm);
+  if(messageInput) messageInput.addEventListener('input', validateForm);
   // UI Reset
   function resetUI() {
-    [logListEl, resultsListEl].forEach(el => el.innerHTML = '');
-    [successCountEl, failedCountEl, totalCountEl].forEach(el => el.textContent = '0');
+    if(logListEl) logListEl.innerHTML = '';
+    if(resultsListEl) resultsListEl.innerHTML = '';
+    if(successCountEl) successCountEl.textContent = '0';
+    if(failedCountEl) failedCountEl.textContent = '0';
+    if(totalCountEl) totalCountEl.textContent = '0';
     selectedImagePath = null;
-    imageFileName.textContent = 'No image selected';
-    imageFileName.title = '';
+    if(imageFileName) imageFileName.textContent = 'No image selected';
+    if(imageFileName) imageFileName.title = '';
     validateForm();
   }
   // Results Display
   function addResultToList(number, status) {
+    if(!resultsListEl) return;
     const item = document.createElement('li');
     item.className = `list-item result-item ${status}`;
     const icon = status === 'success' ? 'check_circle' : 'error';
     const time = new Date().toLocaleTimeString();
     item.innerHTML = `
-${icon}
-${number}
-${time}
+<span class="material-symbols-outlined">${icon}</span>
+<span>${number}</span>
+<span>${time}</span>
 `;
     resultsListEl.appendChild(item);
     resultsListEl.scrollTop = resultsListEl.scrollHeight;
   }
   // Session Start
-  sendButton.addEventListener('click', async () => {
+  if(sendButton) sendButton.addEventListener('click', async () => {
     if (!isConnected) {
       logToUI('Please connect to WhatsApp first', 'error');
       showToast('Please connect to WhatsApp first', 'error');
@@ -221,10 +446,9 @@ ${time}
           showToast('No valid phone numbers found in the file', 'error');
           return;
         }
-        totalCountEl.textContent = phoneNumbers.length;
+        if(totalCountEl) totalCountEl.textContent = phoneNumbers.length;
         sendButton.disabled = true;
         sendButton.innerHTML = `Session in Progress...`;
-        // Debug: log selectedImagePath
         logToUI(`Selected image path: ${selectedImagePath}`, 'info');
         if (window.electronAPI && window.electronAPI.startSession) {
           const sessionData = {
@@ -306,7 +530,6 @@ ${time}
   if (window.electronAPI && window.electronAPI.onUpdate) {
     window.electronAPI.onUpdate((data) => {
       if (data.type === 'qr' && qrContainer) {
-        // Show QR code in the UI (as an image using a QR code generator library or as text)
         qrContainer.innerHTML = '';
         const qrImg = document.createElement('img');
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(data.qr)}&size=200x200`;
@@ -329,9 +552,10 @@ ${time}
         }
       }
       if (data.type === 'finished') {
-        // Session finished, re-enable send button and reset text
-        sendButton.disabled = false;
-        sendButton.innerHTML = `Send Message`;
+        if(sendButton) {
+            sendButton.disabled = false;
+            sendButton.innerHTML = `Send Message`;
+        }
       }
     });
   }
