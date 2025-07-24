@@ -107,6 +107,10 @@
                     <span class="material-symbols-outlined">qr_code_scanner</span>
                     Connect WhatsApp
                   </button>
+                  <button id="reset-cache-btn" class="btn btn-outline" style="margin-left: 10px;">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    Reset WhatsApp Cache
+                  </button>
                 </div>
               </div>
             </section>
@@ -323,5 +327,52 @@
   </div>
 
   <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const connectBtn = document.getElementById('connect-btn');
+      const connectionStatus = document.getElementById('connection-status');
+      const liveLogList = document.getElementById('live-log-list');
+      function addLog(message, time = null) {
+        if (!liveLogList) return;
+        const now = time || new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.className = 'activity-item';
+        div.innerHTML = `<span class="activity-time">${now}</span><span class="activity-message">${message}</span>`;
+        liveLogList.appendChild(div);
+        liveLogList.scrollTop = liveLogList.scrollHeight;
+      }
+      const resetCacheBtn = document.getElementById('reset-cache-btn');
+      if (connectBtn && connectionStatus) {
+        connectBtn.addEventListener('click', async function() {
+          await window.electronAPI.connectWhatsApp();
+          // No UI update here; wait for event from main process
+        });
+      }
+      if (resetCacheBtn) {
+        resetCacheBtn.addEventListener('click', async function() {
+          await window.electronAPI.resetWhatsAppCache();
+          // Reload the app to re-initiate WhatsApp login
+          location.reload();
+        });
+      }
+      // Listen for update events from main process
+      if (window.electronAPI && window.electronAPI.onUpdate) {
+        window.electronAPI.onUpdate((data) => {
+          if (data.type === 'log' && data.message) {
+            addLog(data.message);
+          }
+          if (data.type === 'whatsapp-connected') {
+            connectionStatus.classList.remove('offline');
+            connectionStatus.classList.add('online');
+            const dot = connectionStatus.querySelector('.status-dot');
+            if (dot) dot.style.background = '#22c55e'; // green
+            const span = connectionStatus.querySelector('span:last-child');
+            if (span) span.textContent = 'Connected';
+            addLog('WhatsApp Connected');
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

@@ -8,6 +8,8 @@ let mainWindow;
 let waClient;
 let isReady = false;
 
+let whatsappWindow = null;
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1400, height: 900,
@@ -18,9 +20,27 @@ function createWindow() {
         }
     });
     mainWindow.setMenu(null);
-    // Load from local file instead of server
     mainWindow.loadFile(path.join(__dirname, 'public', 'index.html'));
     mainWindow.webContents.openDevTools();
+}
+
+// Open WhatsApp Web in a separate window with correct user agent
+function openWhatsAppWindow() {
+    if (whatsappWindow && !whatsappWindow.isDestroyed()) {
+        whatsappWindow.focus();
+        return;
+    }
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
+    whatsappWindow = new BrowserWindow({
+        width: 1200, height: 800,
+        title: 'WhatsApp Web',
+        webPreferences: {
+            contextIsolation: true
+        }
+    });
+    whatsappWindow.setMenu(null);
+    whatsappWindow.loadURL('https://web.whatsapp.com', { userAgent });
+    whatsappWindow.on('closed', () => { whatsappWindow = null; });
 }
 
 app.whenReady().then(() => {
@@ -29,6 +49,24 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+
+// IPC handler to reset WhatsApp cache (LocalAuth session)
+ipcMain.handle('reset-whatsapp-cache', async () => {
+    try {
+        const sessionPath = path.join(process.cwd(), '.wwebjs_auth');
+        if (fs.existsSync(sessionPath)) {
+            fs.rmSync(sessionPath, { recursive: true, force: true });
+            sendToUI('log', { level: 'info', message: 'WhatsApp cache reset. Please reconnect.' });
+            return { success: true };
+        } else {
+            sendToUI('log', { level: 'info', message: 'No WhatsApp cache found to reset.' });
+            return { success: false, message: 'No cache found.' };
+        }
+    } catch (e) {
+        sendToUI('log', { level: 'error', message: 'Failed to reset WhatsApp cache.' });
+        return { success: false, message: e.message };
+    }
+});
 
 function sendToUI(type, payload) {
     if (type === 'log' && payload && payload.message) {
@@ -53,31 +91,27 @@ ipcMain.handle('select-image', async () => {
 function initWhatsAppClient() {
     waClient = new Client({
         authStrategy: new LocalAuth(),
-        puppeteer: { headless: false }
+        puppeteer: false
     });
 
     waClient.on('qr', qr => {
-        console.log('[WA] QR event received');
-        // Show QR in terminal and send to UI as text (optionally render as image in UI)
         qrcode.generate(qr, { small: true });
         sendToUI('log', { level: 'info', message: 'Scan the QR code in the terminal to login to WhatsApp.' });
-        sendToUI('qr', { qr }); // Send QR to renderer
+        sendToUI('qr', { qr });
     });
 
     waClient.on('ready', () => {
-        console.log('[WA] Client is ready');
         isReady = true;
         sendToUI('log', { level: 'success', message: 'WhatsApp Web client is ready!' });
+        sendToUI('whatsapp-connected', {});
     });
 
     waClient.on('auth_failure', (msg) => {
-        console.log('[WA] Auth failure:', msg);
         isReady = false;
         sendToUI('log', { level: 'error', message: 'WhatsApp authentication failed. Please restart the app.' });
     });
 
     waClient.on('disconnected', (reason) => {
-        console.log('[WA] Disconnected:', reason);
         isReady = false;
         sendToUI('log', { level: 'error', message: 'WhatsApp client disconnected. Please restart the app.' });
     });
@@ -87,13 +121,14 @@ function initWhatsAppClient() {
     });
 
     waClient.on('error', err => {
-        console.error('[WA] Client error:', err);
+        sendToUI('log', { level: 'error', message: `WhatsApp client error: ${err && err.message ? err.message : err}` });
     });
 
     waClient.initialize();
 }
 
 ipcMain.handle('connect-whatsapp', async () => {
+    openWhatsAppWindow();
     if (isReady) {
         return { success: true, message: 'WhatsApp already connected.' };
     } else {
@@ -101,7 +136,6 @@ ipcMain.handle('connect-whatsapp', async () => {
     }
 });
 
-// --- Session Control State ---
 let sessionControl = {
     paused: false,
     stopped: false,
@@ -160,7 +194,6 @@ ipcMain.handle('start-session', async (event, data) => {
 
     sendToUI('log', { level: 'info', message: `About to enter for loop. Numbers: ${JSON.stringify(numbers)}` });
 
-    // --- Pause/Continue/Stop Logic ---
     let pausedPromiseResolve;
     function waitIfPaused() {
         if (sessionControl.stopped) return false;
@@ -177,19 +210,13 @@ ipcMain.handle('start-session', async (event, data) => {
 
     let i = 0;
     while (i < numbers.length) {
-        // Pause/stop before processing
         let canProceed = await waitIfPaused();
         if (sessionControl.stopped || !canProceed) break;
-
-        // Delay before sending (so pause always happens before sending)
         if (i > 0) {
             await new Promise(resolve => setTimeout(resolve, 2000));
-            // Only break if stopped, not if canProceed is false
             if (sessionControl.stopped) break;
         }
-
         const numberRaw = numbers[i];
-        // Pause/stop right before sending
         canProceed = await waitIfPaused();
         if (sessionControl.stopped || !canProceed) break;
         sendToUI('log', { level: 'info', message: `Processing number: ${numberRaw} (index ${i})` });

@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   stopSession: () => ipcRenderer.invoke('stop-session'),
 
   // From Backend to UI: This is how your UI listens for real-time updates.
-  onUpdate: (callback) => ipcRenderer.on('update', (_event, value) => callback(value))
+  onUpdate: (callback) => ipcRenderer.on('update', (_event, value) => callback(value)),
+  resetWhatsAppCache: () => ipcRenderer.invoke('reset-whatsapp-cache')
 });
