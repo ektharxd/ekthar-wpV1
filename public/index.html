@@ -4,122 +4,322 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Beesoft 🐝 - WhatsApp Automation</title>
+  <meta name="description" content="Smart WhatsApp automation tool for bulk messaging with image support and real-time tracking.">
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-  <div class="theme-switch-wrapper">
-    <label class="theme-switch" for="theme-checkbox">
-      <input type="checkbox" id="theme-checkbox" />
-      <span class="slider round"></span>
-    </label>
-  </div>
+  <div class="app-container">
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" style="position: fixed !important; top: 15px !important; right: 15px !important; z-index: 999999 !important; background: #4f46e5 !important; color: white !important; border: none !important; padding: 12px 18px !important; border-radius: 30px !important; cursor: pointer !important; font-size: 14px !important; font-weight: 600 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; display: block !important; transition: all 0.3s ease !important;">
+      🌙 Dark
+    </button>
 
-  <!-- Welcome Page -->
-  <section id="welcome-page" class="page-center" style="display:none;">
-    <div class="card welcome-card">
-      <div id="status-alert"></div>
-      <img src="Bee.ico" alt="Beesoft Logo" class="logo" />
-      <h1 class="title">Welcome to Beesoft 🐝</h1>
-      <p class="desc">Smart, simple WhatsApp automation for everyone. Send messages in bulk, attach images, and track results with ease.</p>
-      <button id="get-started-btn" class="btn m3-filled">Get Started</button>
-      <p class="sub-text">No sign-in required. Your data stays on your device.</p>
-    </div>
-    <footer>
-      &copy; 2024 Beesoft &bull; 
-      <a href="mailto:ekthar.xd@gmail.com">Contact Support</a> &bull;
-      <button id="clear-data-btn">Clear Local Data</button>
-    </footer>
-  </section>
-
-  <!-- Main App Page -->
-  <div id="main-app">
-    <section id="main-app-page" class="page-center" style="display:none;">
-      <div class="main-app-wide">
-        <div class="main-app-topbar">
-          <img src="Bee.ico" alt="Beesoft Logo" class="logo" />
-          <span class="main-app-title">Beesoft 🐝</span>
-          <span class="main-app-network">Network: <span id="main-network-info">Loading...</span></span>
-          <a href="mailto:ekthar.xd@gmail.com" class="main-app-support">Contact Support</a>
-        </div>
-        <div class="main-app-content">
-          <div class="main-app-left">
-            <div class="input-group">
-              <label for="excelFile">Select Excel File</label>
-              <label for="excelFile" class="upload-label btn m3-tonal">Upload Excel</label>
-              <input type="file" id="excelFile" accept=".xlsx,.xls" />
-              <span id="file-name-display" class="file-name"></span>
-            </div>
-            <div class="input-group">
-              <label for="message">Message Template</label>
-              <textarea id="message" rows="5" placeholder="Type your message here..."></textarea>
-            </div>
-            <div class="input-group">
-              <label>Attach Image (Optional)</label>
-              <button id="attachImageBtn" class="btn m3-outlined">Choose Image</button>
-              <span id="imageFileName" class="file-name">No image selected</span>
-            </div>
-            <div id="qr-container" style="display:none;"></div>
+    <!-- Welcome Page -->
+    <section id="welcome-page" class="page-wrapper" style="display:none;">
+      <div class="welcome-container">
+        <div class="card welcome-card">
+          <div class="card-header">
+            <div id="status-alert" class="notification" style="display:none;"></div>
+            <img src="Bee.ico" alt="Beesoft Logo" class="welcome-logo" />
+            <h1 class="text-display welcome-title">Welcome to Beesoft 🐝</h1>
+            <p class="text-body welcome-description">
+              Smart, simple WhatsApp automation for everyone. Send personalized messages in bulk, 
+              attach images, and track results with real-time analytics.
+            </p>
           </div>
-          <div class="main-app-right">
-            <div class="stats-section">
-              <h3 class="section-title">Session Stats</h3>
-              <div class="stats">
-                <div>SUCCESS<span id="success-count">0</span></div>
-                <div>FAILED<span id="failed-count">0</span></div>
-                <div>TOTAL<span id="total-count">0</span></div>
+          <div class="card-body">
+            <button id="get-started-btn" class="btn btn-primary btn-lg btn-full welcome-cta">
+              <span class="material-symbols-outlined">rocket_launch</span>
+              Get Started
+            </button>
+            <p class="text-caption text-center">
+              <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">shield</span>
+              No sign-in required. Your data stays on your device.
+            </p>
+          </div>
+        </div>
+        
+        <div class="welcome-footer">
+          <p class="text-caption">
+            &copy; 2024 Beesoft &bull; 
+            <a href="mailto:ekthar.xd@gmail.com">Contact Support</a> &bull;
+            <button id="clear-data-btn" class="btn-ghost">Clear Local Data</button>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Application -->
+    <section id="main-app-page" class="page-wrapper" style="display:none;">
+      <div class="main-container">
+        <!-- Header -->
+        <header class="main-header">
+          <button id="back-to-welcome-btn" class="btn btn-ghost btn-sm" title="Back to Welcome">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Back
+          </button>
+          <img src="Bee.ico" alt="Beesoft Logo" class="main-logo" />
+          <div class="main-title">
+            <h1 class="text-title">Beesoft 🐝</h1>
+          </div>
+          <div class="main-status">
+            <div id="connection-status" class="status-indicator offline">
+              <span class="status-dot"></span>
+              <span>Disconnected</span>
+            </div>
+            <a href="mailto:ekthar.xd@gmail.com" class="btn btn-ghost btn-sm">
+              <span class="material-symbols-outlined">support</span>
+              Support
+            </a>
+          </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+          <!-- Left Panel: Workflow -->
+          <div class="workflow-panel">
+            <!-- Step 1: Connect WhatsApp -->
+            <section class="workflow-section" id="step-connect">
+              <div class="workflow-header">
+                <div class="workflow-step" id="step-1-indicator">1</div>
+                <div class="workflow-title">
+                  <h2 class="text-title">Connect WhatsApp</h2>
+                  <p class="text-caption">Scan QR code to connect your WhatsApp account</p>
+                </div>
+              </div>
+              <div class="workflow-body">
+                <div id="qr-container" style="display:none;">
+                  <div class="text-center">
+                    <p class="text-body" style="margin-bottom: var(--space-md);">
+                      Scan this QR code with your WhatsApp mobile app
+                    </p>
+                    <div id="qr-code-display"></div>
+                    <p class="text-caption" style="margin-top: var(--space-md);">
+                      Open WhatsApp → Settings → Linked Devices → Link a Device
+                    </p>
+                  </div>
+                </div>
+                <div id="connection-placeholder" class="text-center">
+                  <button id="connect-btn" class="btn btn-primary">
+                    <span class="material-symbols-outlined">qr_code_scanner</span>
+                    Connect WhatsApp
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Step 2: Upload Contacts -->
+            <section class="workflow-section" id="step-upload">
+              <div class="workflow-header">
+                <div class="workflow-step disabled" id="step-2-indicator">2</div>
+                <div class="workflow-title">
+                  <h2 class="text-title">Upload Contact List</h2>
+                  <p class="text-caption">Upload an Excel file with phone numbers</p>
+                </div>
+              </div>
+              <div class="workflow-body">
+                <div class="form-group">
+                  <label class="form-label required" for="excelFile">Contact List File</label>
+                  <div class="file-upload">
+                    <input type="file" id="excelFile" class="file-upload-input" accept=".xlsx,.xls" />
+                    <label for="excelFile" class="file-upload-label" id="file-upload-area">
+                      <span class="material-symbols-outlined file-upload-icon">upload_file</span>
+                      <span class="file-upload-text">Drop your Excel file here or click to browse</span>
+                      <span class="file-upload-hint">Supports .xlsx and .xls files</span>
+                    </label>
+                  </div>
+                  <div id="file-info" class="form-help" style="display:none;"></div>
+                  <div class="form-help">
+                    <strong>File format:</strong> Excel file with phone numbers in any column. 
+                    Numbers should include country code (e.g., +1234567890).
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Step 3: Compose Message -->
+            <section class="workflow-section" id="step-compose">
+              <div class="workflow-header">
+                <div class="workflow-step disabled" id="step-3-indicator">3</div>
+                <div class="workflow-title">
+                  <h2 class="text-title">Compose Message</h2>
+                  <p class="text-caption">Write your message and optionally attach an image</p>
+                </div>
+              </div>
+              <div class="workflow-body">
+                <div class="form-group">
+                  <label class="form-label required" for="message">Message Content</label>
+                  <textarea 
+                    id="message" 
+                    class="form-textarea" 
+                    placeholder="Type your message here... You can use variables like {name} if your Excel has a name column."
+                    rows="4"
+                  ></textarea>
+                  <div class="form-help">
+                    <span id="char-count">0</span> characters
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Attach Image (Optional)</label>
+                  <button id="attachImageBtn" class="btn btn-outline btn-full">
+                    <span class="material-symbols-outlined">image</span>
+                    Choose Image
+                  </button>
+                  <div id="image-preview" style="display:none;" class="form-help">
+                    <strong>Selected:</strong> <span id="imageFileName">No image selected</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Message Preview</label>
+                  <div id="message-preview" class="form-input" style="min-height: 60px; background: var(--surface-secondary); font-style: italic; color: var(--text-tertiary);">
+                    Your message preview will appear here...
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Action Bar -->
+            <div class="action-bar">
+              <button id="sendButton" class="btn btn-primary btn-lg" disabled>
+                <span class="material-symbols-outlined">send</span>
+                <span id="send-btn-text">Start Campaign</span>
+              </button>
+              <div class="action-controls">
+                <button id="pauseButton" class="btn btn-outline" disabled title="Pause campaign">
+                  <span class="material-symbols-outlined">pause</span>
+                </button>
+                <button id="continueButton" class="btn btn-outline" disabled title="Resume campaign">
+                  <span class="material-symbols-outlined">play_arrow</span>
+                </button>
+                <button id="stopButton" class="btn btn-danger" disabled title="Stop campaign">
+                  <span class="material-symbols-outlined">stop</span>
+                </button>
               </div>
             </div>
-            <div class="log-section">
-              <h3 class="section-title">Live Activity</h3>
-              <ul id="live-log-list" class="log-list"></ul>
-            </div>
-            <div class="main-actions">
-              <button id="connect-btn" class="btn m3-tonal">Connect</button>
-              <button id="sendButton" class="btn m3-filled">Send</button>
-              <button id="pauseButton" class="btn m3-outlined" title="Pause"><span class="material-symbols-outlined">pause</span></button>
-              <button id="continueButton" class="btn m3-outlined" title="Continue"><span class="material-symbols-outlined">play_arrow</span></button>
-              <button id="stopButton" class="btn m3-danger" title="Stop"><span class="material-symbols-outlined">stop</span></button>
+          </div>
+
+          <!-- Right Panel: Stats & Activity -->
+          <aside class="monitoring-panel">
+            <!-- Campaign Stats -->
+            <section class="stats-section">
+              <h3 class="text-title" style="margin-bottom: var(--space-md);">Campaign Statistics</h3>
+              <div class="stats-grid">
+                <div class="stat-card success">
+                  <span class="stat-value" id="success-count">0</span>
+                  <span class="stat-label">Sent</span>
+                </div>
+                <div class="stat-card error">
+                  <span class="stat-value" id="failed-count">0</span>
+                  <span class="stat-label">Failed</span>
+                </div>
+                <div class="stat-card">
+                  <span class="stat-value" id="total-count">0</span>
+                  <span class="stat-label">Total</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Live Activity Log -->
+            <section class="activity-section">
+              <div class="activity-log">
+                <div class="activity-header">
+                  <span class="material-symbols-outlined" style="font-size: 1rem; margin-right: var(--space-xs);">timeline</span>
+                  Live Activity
+                </div>
+                <div class="activity-list" id="live-log-list">
+                  <div class="activity-item">
+                    <span class="activity-time">--:--:--</span>
+                    <span class="activity-message">Ready to start your campaign...</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- System Status -->
+            <details class="workflow-section" style="margin-top: var(--space-lg);">
+              <summary class="workflow-header" style="cursor: pointer;">
+                <div class="workflow-title">
+                  <h3 class="text-title">System Status</h3>
+                  <p class="text-caption">Network and connection information</p>
+                </div>
+              </summary>
+              <div class="workflow-body">
+                <div class="form-group">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); font-size: 0.75rem;">
+                    <div><strong>Network:</strong> <span id="network-status">Checking...</span></div>
+                    <div><strong>Ping:</strong> <span id="network-ping">--ms</span></div>
+                    <div><strong>IP:</strong> <span id="network-ip">Loading...</span></div>
+                    <div><strong>Connection:</strong> <span id="network-conn">Unknown</span></div>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </aside>
+        </main>
+      </div>
+    </section>
+
+    <!-- Trial Lock Page -->
+    <section id="trial-lock-page" class="page-wrapper" style="display:none;">
+      <div class="welcome-container">
+        <div class="card">
+          <div class="card-header" style="position: relative;">
+            <button id="admin-login-btn" class="btn btn-ghost btn-sm" style="position: absolute; top: 0; right: 0;">
+              <span class="material-symbols-outlined">admin_panel_settings</span>
+              Admin
+            </button>
+            <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--color-warning); margin-bottom: var(--space-md);">lock</span>
+            <h2 class="text-headline">Trial Has Expired</h2>
+            <p class="text-body">
+              This software is currently locked. Please contact your administrator to activate or extend your trial period.
+            </p>
+          </div>
+          <div class="card-body">
+            <div id="trial-info" class="text-caption text-center"></div>
+            <div id="admin-login-form" style="display:none;">
+              <div class="form-group">
+                <label class="form-label" for="admin-username">Username</label>
+                <input id="admin-username" type="text" class="form-input" placeholder="Enter admin username" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="admin-password">Password</label>
+                <input id="admin-password" type="password" class="form-input" placeholder="Enter admin password" />
+              </div>
+              <button id="admin-auth-btn" class="btn btn-primary btn-full">
+                <span class="material-symbols-outlined">login</span>
+                Login as Admin
+              </button>
+              <div id="admin-login-error" class="form-error"></div>
             </div>
           </div>
         </div>
       </div>
     </section>
-  </div>
 
-  <!-- Modal for all popups -->
-  <div id="modal" style="display:none;">
-    <div id="modal-content">
-      <h3 id="modal-title"></h3>
-      <div id="modal-body"></div>
-      <div class="modal-actions">
-        <button id="modal-cancel" class="btn m3-tonal">Cancel</button>
-        <button id="modal-ok" class="btn m3-filled">OK</button>
-      </div>
-      <div id="modal-error"></div>
-    </div>
-  </div>
-
-  <!-- Trial Lock Page -->
-  <div id="trial-lock-page" class="page-center" style="display:none;">
-    <div class="card trial-lock-card">
-      <button id="admin-login-btn">Admin Login</button>
-      <h2 class="title">Trial Has Expired</h2>
-      <p class="desc">This software is currently locked. Please contact your administrator to activate or extend your trial period.</p>
-      <div id="trial-info" class="sub-text"></div>
-      <div id="admin-login-form" style="display:none;">
-        <div class="input-group">
-          <input id="admin-username" type="text" placeholder="Admin Username" />
+    <!-- Modal System -->
+    <div id="modal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-title" class="modal-title"></h3>
         </div>
-        <div class="input-group">
-          <input id="admin-password" type="password" placeholder="Admin Password" />
+        <div class="modal-body">
+          <div id="modal-body"></div>
         </div>
-        <button id="admin-auth-btn" class="btn m3-filled">Login as Admin</button>
-        <div id="admin-login-error" class="sub-text" style="color: var(--danger-color);"></div>
+        <div class="modal-footer">
+          <button id="modal-cancel" class="btn btn-ghost">Cancel</button>
+          <button id="modal-ok" class="btn btn-primary">OK</button>
+        </div>
+        <div id="modal-error" class="form-error" style="margin: var(--space-md) var(--space-xl) 0;"></div>
       </div>
     </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
   </div>
 
   <script src="app.js"></script>
