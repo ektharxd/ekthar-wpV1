@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beesoft Installer Graphics Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFFBFE 100%);
+        }
+        
+        .canvas-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        canvas {
+            border: 2px solid #6750A4;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(103, 80, 164, 0.2);
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 4px 16px rgba(103, 80, 164, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(103, 80, 164, 0.4);
+        }
+        
+        h2 {
+            color: #6750A4;
+            text-align: center;
+            margin: 30px 0 10px 0;
+        }
+        
+        .bee-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #6750A4;">🐝 Beesoft Installer Graphics Generator</h1>
+    
+    <h2>Welcome Banner (164x314)</h2>
+    <div class="canvas-container">
+        <canvas id="welcomeCanvas" width="164" height="314"></canvas>
+        <br>
+        <button class="download-btn" onclick="downloadCanvas('welcomeCanvas', 'welcome-bee.bmp')">
+            Download Welcome Banner
+        </button>
+    </div>
+    
+    <h2>Header Banner (150x57)</h2>
+    <div class="canvas-container">
+        <canvas id="headerCanvas" width="150" height="57"></canvas>
+        <br>
+        <button class="download-btn" onclick="downloadCanvas('headerCanvas', 'header-bee.bmp')">
+            Download Header Banner
+        </button>
+    </div>
+
+    <script>
+        // Material 3 Color Palette
+        const colors = {
+            primary: '#6750A4',
+            secondary: '#625B71',
+            tertiary: '#7D5260',
+            surface: '#FFFBFE',
+            surfaceVariant: '#E7E0EC',
+            accent: '#FFB000',
+            bee: '#FFC107',
+            beeSecondary: '#FF8F00'
+        };
+
+        // Draw Welcome Banner
+        function drawWelcomeBanner() {
+            const canvas = document.getElementById('welcomeCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 314);
+            gradient.addColorStop(0, colors.surface);
+            gradient.addColorStop(0.5, '#F3F0FF');
+            gradient.addColorStop(1, colors.surfaceVariant);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 164, 314);
+            
+            // Decorative circles
+            ctx.fillStyle = colors.primary + '20';
+            ctx.beginPath();
+            ctx.arc(140, 30, 25, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = colors.accent + '30';
+            ctx.beginPath();
+            ctx.arc(20, 280, 20, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Main bee illustration
+            drawBee(ctx, 82, 120, 40);
+            
+            // Beesoft text
+            ctx.fillStyle = colors.primary;
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Beesoft', 82, 200);
+            
+            ctx.fillStyle = colors.secondary;
+            ctx.font = '12px Arial';
+            ctx.fillText('🐝', 82, 220);
+            
+            ctx.fillStyle = colors.tertiary;
+            ctx.font = '10px Arial';
+            ctx.fillText('WhatsApp Automation', 82, 240);
+        }
+
+        // Draw Header Banner
+        function drawHeaderBanner() {
+            const canvas = document.getElementById('headerCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 150, 0);
+            gradient.addColorStop(0, colors.primary);
+            gradient.addColorStop(1, '#7C4DFF');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 150, 57);
+            
+            // Bee icon
+            drawBee(ctx, 25, 28, 15);
+            
+            // Text
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Beesoft 🐝', 50, 32);
+            
+            ctx.font = '10px Arial';
+            ctx.fillText('Smart Automation', 50, 45);
+        }
+
+        // Draw bee illustration
+        function drawBee(ctx, x, y, size) {
+            const scale = size / 20;
+            
+            // Bee body
+            ctx.fillStyle = colors.bee;
+            ctx.beginPath();
+            ctx.ellipse(x, y, 8 * scale, 12 * scale, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Bee stripes
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - 6 * scale, y - 4 * scale, 12 * scale, 2 * scale);
+            ctx.fillRect(x - 6 * scale, y + 2 * scale, 12 * scale, 2 * scale);
+            
+            // Wings
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.ellipse(x - 5 * scale, y - 8 * scale, 4 * scale, 6 * scale, -0.3, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(x + 5 * scale, y - 8 * scale, 4 * scale, 6 * scale, 0.3, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Antennae
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1 * scale;
+            ctx.beginPath();
+            ctx.moveTo(x - 2 * scale, y - 10 * scale);
+            ctx.lineTo(x - 4 * scale, y - 14 * scale);
+            ctx.moveTo(x + 2 * scale, y - 10 * scale);
+            ctx.lineTo(x + 4 * scale, y - 14 * scale);
+            ctx.stroke();
+            
+            // Antennae tips
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(x - 4 * scale, y - 14 * scale, 1 * scale, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(x + 4 * scale, y - 14 * scale, 1 * scale, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // Download canvas as image
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Initialize graphics
+        drawWelcomeBanner();
+        drawHeaderBanner();
+        
+        // Add floating animation to bee
+        setInterval(() => {
+            drawWelcomeBanner();
+            drawHeaderBanner();
+        }, 100);
+    </script>
+</body>
+</html>
